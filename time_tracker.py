@@ -905,6 +905,7 @@ def validate_time_log_changes(original_df, edited_df):
         # Check if all required columns are present
         required_cols = ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
         if not all(col in edited_df.columns for col in required_cols):
+            st.error(f"Missing columns. Required: {required_cols}, Found: {list(edited_df.columns)}")
             return False
         
         # Validate each row (skip rows marked for deletion)
@@ -915,6 +916,7 @@ def validate_time_log_changes(original_df, edited_df):
                 
             # Check task name
             if not row['task'] or not str(row['task']).strip():
+                st.error(f"Row {idx}: Empty task name")
                 return False
             
             # Check time format and logic
@@ -923,29 +925,36 @@ def validate_time_log_changes(original_df, edited_df):
                 end_time = pd.to_datetime(row['end_time'])
                 
                 if start_time >= end_time:
+                    st.error(f"Row {idx}: Start time must be before end time")
                     return False
                 
-                # Check duration consistency
+                # Check duration consistency - auto-correct if times were changed
                 calculated_duration = (end_time - start_time).total_seconds() / 60
                 if abs(calculated_duration - row['duration_minutes']) > 0.1:  # Allow small rounding differences
-                    return False
+                    # Auto-correct the duration if times were changed
+                    edited_df.loc[idx, 'duration_minutes'] = calculated_duration
+                    st.info(f"Row {idx}: Auto-corrected duration from {row['duration_minutes']:.2f} to {calculated_duration:.2f} minutes")
                 
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as e:
+                st.error(f"Row {idx}: Invalid time format - {e}")
                 return False
             
             # Check date format
             try:
                 pd.to_datetime(row['date'])
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as e:
+                st.error(f"Row {idx}: Invalid date format - {e}")
                 return False
             
             # Check session type
             if row['session_type'] not in ['work', 'break', 'long_break']:
+                st.error(f"Row {idx}: Invalid session type: {row['session_type']}")
                 return False
         
         return True
         
-    except Exception:
+    except Exception as e:
+        st.error(f"Validation error: {e}")
         return False
 
 def update_time_logs(edited_df, original_df):
