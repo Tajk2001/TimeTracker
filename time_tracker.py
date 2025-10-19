@@ -266,8 +266,8 @@ class TimeTracker:
                 return
             
             # Calculate total time per task
-            task_totals = logs_df.groupby('task_name')['duration_minutes'].sum().reset_index()
-            task_totals.columns = ['task_name', 'total_time_minutes']
+            task_totals = logs_df.groupby('task')['duration_minutes'].sum().reset_index()
+            task_totals.columns = ['task', 'total_time_minutes']
             
             # Get existing tasks
             tasks_df = self._safe_file_operation(self.tasks_file, 'read')
@@ -276,7 +276,7 @@ class TimeTracker:
             
             # Update or add task totals
             for _, row in task_totals.iterrows():
-                task_name = row['task_name']
+                task_name = row['task']
                 total_time = row['total_time_minutes']
                 
                 # Check if task exists
@@ -903,7 +903,7 @@ def validate_time_log_changes(original_df, edited_df):
     """Validate changes made to time logs"""
     try:
         # Check if all required columns are present
-        required_cols = ['task_name', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
+        required_cols = ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
         if not all(col in edited_df.columns for col in required_cols):
             return False
         
@@ -914,7 +914,7 @@ def validate_time_log_changes(original_df, edited_df):
                 continue
                 
             # Check task name
-            if not row['task_name'] or not str(row['task_name']).strip():
+            if not row['task'] or not str(row['task']).strip():
                 return False
             
             # Check time format and logic
@@ -1063,7 +1063,7 @@ def render_analytics_tab():
         
         # Create editable dataframe
         edited_df = st.data_editor(
-            logs_with_delete[['task_name', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type', 'delete']],
+            logs_with_delete[['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type', 'delete']],
             num_rows="dynamic",
             use_container_width=True,
             key="time_logs_editor",
