@@ -1014,8 +1014,17 @@ def update_time_logs(edited_df, original_df):
         # Round duration to 2 decimal places
         complete_df['duration_minutes'] = complete_df['duration_minutes'].round(2)
         
+        # Debug: Show what we're about to save
+        st.write("**Saving the following data:**")
+        st.write(f"Total rows: {len(complete_df)}")
+        st.write("Sample of updated data:")
+        st.dataframe(complete_df.head(10), use_container_width=True)
+        
         # Save to CSV using the tracker's safe file operation
         tracker._safe_file_operation(tracker.csv_file, 'write', complete_df)
+        
+        # Debug: Verify the file was written
+        st.info(f"✅ Data saved to {tracker.csv_file} - {len(complete_df)} rows")
         
         # Update task totals
         tracker.update_all_task_totals()
