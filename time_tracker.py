@@ -180,7 +180,7 @@ class TimeTracker:
         try:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
-            return df.to_dict('records')
+                return df.to_dict("records")
             return []
         except Exception as e:
             print(f"Error reading tasks: {e}")
@@ -196,7 +196,7 @@ class TimeTracker:
             if start_time >= end_time:
                 raise ValueError("Start time must be before end time")
             
-        duration = (end_time - start_time).total_seconds() / 60
+            duration = (end_time - start_time).total_seconds() / 60
             if duration <= 0:
                 raise ValueError("Duration must be positive")
             
@@ -215,10 +215,10 @@ class TimeTracker:
                 raise ValueError("Invalid log entry format")
             
             # Write to file safely
-            self._safe_file_operation(self.csv_file, 'append', log_entry)
-        
-        # Update task total time
-        self.update_task_total_time(task, duration)
+            self._safe_file_operation(self.csv_file, "append", log_entry)
+            
+            # Update task total time
+            self.update_task_total_time(task, duration)
             
             print(f"Successfully logged {duration:.2f} minutes for task: {task}")
             
