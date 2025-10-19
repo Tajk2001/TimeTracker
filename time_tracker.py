@@ -195,7 +195,7 @@ class TimeTracker:
             if start_time >= end_time:
                 raise ValueError("Start time must be before end time")
             
-        duration = (end_time - start_time).total_seconds() / 60
+            duration = (end_time - start_time).total_seconds() / 60
             if duration <= 0:
                 raise ValueError("Duration must be positive")
             
@@ -215,9 +215,9 @@ class TimeTracker:
             
             # Write to file safely
             self._safe_file_operation(self.csv_file, 'append', log_entry)
-        
-        # Update task total time
-        self.update_task_total_time(task, duration)
+            
+            # Update task total time
+            self.update_task_total_time(task, duration)
             
             print(f"Successfully logged {duration:.2f} minutes for task: {task}")
             
