@@ -180,7 +180,7 @@ class TimeTracker:
         try:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
-                return df.to_dict('records')
+            return df.to_dict('records')
             return []
         except Exception as e:
             print(f"Error reading tasks: {e}")
@@ -196,7 +196,7 @@ class TimeTracker:
             if start_time >= end_time:
                 raise ValueError("Start time must be before end time")
             
-            duration = (end_time - start_time).total_seconds() / 60
+        duration = (end_time - start_time).total_seconds() / 60
             if duration <= 0:
                 raise ValueError("Duration must be positive")
             
@@ -216,9 +216,9 @@ class TimeTracker:
             
             # Write to file safely
             self._safe_file_operation(self.csv_file, 'append', log_entry)
-            
-            # Update task total time
-            self.update_task_total_time(task, duration)
+        
+        # Update task total time
+        self.update_task_total_time(task, duration)
             
             print(f"Successfully logged {duration:.2f} minutes for task: {task}")
             
@@ -232,7 +232,7 @@ class TimeTracker:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
                 original_count = len(df)
-                df = df[df['task_name'] != task_name]
+            df = df[df['task_name'] != task_name]
                 if len(df) < original_count:
                     self._safe_file_operation(self.tasks_file, 'write', df)
                     print(f"Successfully deleted task: {task_name}")
@@ -246,11 +246,11 @@ class TimeTracker:
         try:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
-                mask = df['task_name'] == task_name
-                if mask.any():
-                    # Convert to float to avoid dtype warnings
+            mask = df['task_name'] == task_name
+            if mask.any():
+                # Convert to float to avoid dtype warnings
                     df['total_time_minutes'] = pd.to_numeric(df['total_time_minutes'], errors='coerce').fillna(0)
-                    df.loc[mask, 'total_time_minutes'] += duration
+                df.loc[mask, 'total_time_minutes'] += duration
                     self._safe_file_operation(self.tasks_file, 'write', df)
                     print(f"Updated total time for {task_name}: +{duration:.2f} minutes")
                 else:
@@ -303,27 +303,33 @@ class TimeTracker:
     def get_time_logs(self) -> pd.DataFrame:
         """Get all time logs with error handling and caching"""
         try:
-            # Use cache if available and not cleared
-            if self._data_cache is not None:
+            # Always reload from file if cache is None (after updates)
+            if self._data_cache is None:
+                print(f"Loading fresh data from {self.csv_file}")
+                df = self._safe_file_operation(self.csv_file, 'read')
+                if df is not None:
+                    # Clean any remaining data issues
+                    expected_columns = ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
+                    if list(df.columns) == expected_columns:
+                        self._data_cache = df  # Cache the data
+                        print(f"Loaded and cached {len(df)} rows")
+                        return df
+                    else:
+                        print("Warning: CSV columns don't match expected format, attempting to fix...")
+                        # Try to fix column issues
+                        df = df.iloc[:, :6]  # Take only first 6 columns
+                        df.columns = expected_columns
+                        self._data_cache = df  # Cache the data
+                        print(f"Fixed columns and cached {len(df)} rows")
+                        return df
+                df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
+                self._data_cache = df  # Cache the data
+                print("Created empty dataframe and cached")
+                return df
+            else:
+                print(f"Using cached data: {len(self._data_cache)} rows")
                 return self._data_cache
                 
-            df = self._safe_file_operation(self.csv_file, 'read')
-            if df is not None:
-                # Clean any remaining data issues
-                expected_columns = ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
-                if list(df.columns) == expected_columns:
-                    self._data_cache = df  # Cache the data
-                    return df
-                else:
-                    print("Warning: CSV columns don't match expected format, attempting to fix...")
-                    # Try to fix column issues
-                    df = df.iloc[:, :6]  # Take only first 6 columns
-                    df.columns = expected_columns
-                    self._data_cache = df  # Cache the data
-                    return df
-            df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
-            self._data_cache = df  # Cache the data
-            return df
         except Exception as e:
             print(f"Error reading time logs: {e}")
             df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
@@ -333,9 +339,9 @@ class TimeTracker:
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
         try:
-            logs_df = self.get_time_logs()
-            
-            if logs_df.empty:
+        logs_df = self.get_time_logs()
+        
+        if logs_df.empty:
                 return {
                     'total_time': 0,
                     'total_sessions': 0,
@@ -346,42 +352,42 @@ class TimeTracker:
                     'week_sessions': 0,
                     'task_breakdown': {}
                 }
-            
-            stats = {}
+        
+        stats = {}
             
             # Convert duration to numeric, handle any non-numeric values
             logs_df['duration_minutes'] = pd.to_numeric(logs_df['duration_minutes'], errors='coerce').fillna(0)
-            
-            # Overall statistics
-            stats['total_time'] = logs_df['duration_minutes'].sum()
-            stats['total_sessions'] = len(logs_df)
-            stats['unique_tasks'] = logs_df['task'].nunique()
-            
-            # Today's statistics
-            today = datetime.datetime.now().strftime('%Y-%m-%d')
-            today_logs = logs_df[logs_df['date'] == today]
-            stats['today_time'] = today_logs['duration_minutes'].sum()
-            stats['today_sessions'] = len(today_logs)
-            
-            # This week's statistics
-            week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
-            week_logs = logs_df[logs_df['date'] >= week_ago]
-            stats['week_time'] = week_logs['duration_minutes'].sum()
-            stats['week_sessions'] = len(week_logs)
         
-            # Task-specific statistics
+        # Overall statistics
+        stats['total_time'] = logs_df['duration_minutes'].sum()
+        stats['total_sessions'] = len(logs_df)
+        stats['unique_tasks'] = logs_df['task'].nunique()
+        
+        # Today's statistics
+        today = datetime.datetime.now().strftime('%Y-%m-%d')
+        today_logs = logs_df[logs_df['date'] == today]
+        stats['today_time'] = today_logs['duration_minutes'].sum()
+        stats['today_sessions'] = len(today_logs)
+        
+        # This week's statistics
+        week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+        week_logs = logs_df[logs_df['date'] >= week_ago]
+        stats['week_time'] = week_logs['duration_minutes'].sum()
+        stats['week_sessions'] = len(week_logs)
+        
+        # Task-specific statistics
             if not logs_df.empty:
-                task_stats = logs_df.groupby('task').agg({
-                    'duration_minutes': ['sum', 'count', 'mean'],
-                    'date': 'nunique'
-                }).round(2)
-                
-                task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
-                stats['task_breakdown'] = task_stats.to_dict('index')
+        task_stats = logs_df.groupby('task').agg({
+            'duration_minutes': ['sum', 'count', 'mean'],
+            'date': 'nunique'
+        }).round(2)
+        
+        task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
+        stats['task_breakdown'] = task_stats.to_dict('index')
             else:
                 stats['task_breakdown'] = {}
-            
-            return stats
+        
+        return stats
             
         except Exception as e:
             print(f"Error calculating statistics: {e}")
@@ -511,12 +517,12 @@ def main():
     log_app_start()
     
     try:
-        st.set_page_config(
+    st.set_page_config(
             page_title=APP_NAME,
             page_icon="🕐",
-            layout="wide",
-            initial_sidebar_state="expanded"
-        )
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
         
         # Initialize managers
         data_manager = DataManager()
@@ -1032,6 +1038,10 @@ def update_time_logs(edited_df, original_df):
         # Force refresh the session state data
         st.session_state.tracker._data_cache = None
         
+        # Also force a complete reload by clearing the tracker instance
+        # This ensures fresh data is loaded on next access
+        print("Clearing tracker cache and forcing reload")
+        
     except Exception as e:
         raise Exception(f"Failed to update time logs: {e}")
 
@@ -1041,6 +1051,12 @@ def render_analytics_tab():
     
     logs_df = st.session_state.tracker.get_time_logs()
     tasks_df = pd.read_csv(st.session_state.tracker.tasks_file) if os.path.exists(st.session_state.tracker.tasks_file) else pd.DataFrame()
+    
+    # Debug: Show what data was loaded
+    st.write(f"**Debug: Loaded {len(logs_df)} time log entries**")
+    if not logs_df.empty:
+        st.write("Sample of loaded data:")
+        st.dataframe(logs_df.head(5), use_container_width=True)
     
     if logs_df.empty:
         st.info("No data available for analytics. Start tracking time to see insights!")
@@ -1058,7 +1074,7 @@ def render_analytics_tab():
         
         with col1:
             st.metric("Total Time", f"{metrics.get('total_time_hours', 0):.1f} hrs")
-        with col2:
+            with col2:
             st.metric("Sessions", f"{metrics.get('total_sessions', 0)}")
         with col3:
             st.metric("Avg Session", f"{metrics.get('avg_session_length', 0):.1f} min")
@@ -1212,7 +1228,7 @@ def render_data_management_tab():
                 if st.button("Import Data"):
                     if data_manager.import_data(import_data):
                         st.success("Data imported successfully!")
-                        st.rerun()
+                    st.rerun()
                     else:
                         st.error("Failed to import data")
             except Exception as e:
@@ -1228,7 +1244,7 @@ def render_data_management_tab():
             backup_name = data_manager.create_backup()
             if backup_name:
                 st.success(f"Backup created: {backup_name}")
-            else:
+                else:
                 st.error("Failed to create backup")
     
     with backup_col2:
@@ -1314,7 +1330,7 @@ def render_settings_tab():
                     settings_manager.save_settings()
                     st.success("Pomodoro settings saved!")
                     st.rerun()
-                else:
+            else:
                     st.error("Failed to save settings")
     
     # UI settings
