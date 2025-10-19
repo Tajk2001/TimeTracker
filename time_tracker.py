@@ -913,11 +913,17 @@ def validate_time_log_changes(original_df, edited_df):
             # Skip validation for rows marked for deletion
             if 'delete' in edited_df.columns and row.get('delete', False):
                 continue
-                
-            # Check task name
-            if not row['task'] or not str(row['task']).strip():
-                st.error(f"Row {idx}: Empty task name")
-                return False
+            
+            # Check if this is an empty row (all fields empty or NaN)
+            if pd.isna(row['task']) or (not row['task'] or not str(row['task']).strip()):
+                # Check if other fields are also empty
+                if (pd.isna(row['start_time']) or not row['start_time']) and \
+                   (pd.isna(row['end_time']) or not row['end_time']):
+                    st.warning(f"Row {idx}: Empty row detected - skipping validation")
+                    continue
+                else:
+                    st.error(f"Row {idx}: Empty task name - please enter a task name or delete this row")
+                    return False
             
             # Check time format and logic
             try:
@@ -976,6 +982,14 @@ def update_time_logs(edited_df, original_df):
                     # Remove this row
                     updated_df = updated_df.drop(idx)
                 else:
+                    # Skip empty rows (rows with no task name and no times)
+                    if (pd.isna(row['task']) or not row['task'] or not str(row['task']).strip()) and \
+                       (pd.isna(row['start_time']) or not row['start_time']) and \
+                       (pd.isna(row['end_time']) or not row['end_time']):
+                        # Remove empty rows
+                        updated_df = updated_df.drop(idx)
+                        continue
+                    
                     # Update the row with edited data (excluding delete column)
                     update_data = row.drop('delete') if 'delete' in edited_df.columns else row
                     updated_df.loc[idx] = update_data
