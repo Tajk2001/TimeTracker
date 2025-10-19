@@ -4,8 +4,8 @@
 time_logs.csv
 tasks.csv
 settings.json
-*.csv
-*.json
+# Allow sample files
+!sample_*.csv
 
 # Virtual Environment
 time_tracker_env/
@@ -16,11 +16,12 @@ env/
 # Build Artifacts
 build/
 dist/
-*.spec
 *.exe
 *.app
 *.dmg
 TimeTrackerPro_Portable/
+# Allow spec file for PyInstaller
+!time_tracker.spec
 
 # Python Cache
 __pycache__/
@@ -63,7 +64,6 @@ Thumbs.db
 
 # PyInstaller
 *.manifest
-*.spec
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -87,9 +87,7 @@ dmypy.json
 
 # Distribution / packaging
 .Python
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/

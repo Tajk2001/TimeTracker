@@ -1,8 +1,8 @@
-# ⏱️ Time Tracker Pro
+# Time Tracker Pro
 
 A comprehensive, modern time tracking application with Pomodoro timer, advanced analytics, and data management features.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option 1: Automated Setup (Recommended)
 ```bash
@@ -31,7 +31,7 @@ streamlit run time_tracker.py
 ### Option 3: macOS Double-Click
 **Double-click `Start Time Tracker.command` to launch the app!**
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 TimeTrackerPro/
@@ -57,52 +57,52 @@ TimeTrackerPro/
 └── README.md            # This file
 ```
 
-## 🎯 Features
+## Features
 
-### ⏰ Time Tracking
-- ✅ **Task-based tracking** - Add tasks and track time spent
-- ✅ **Real-time display** - Live elapsed time counter
-- ✅ **Session management** - Start/stop tracking with one click
-- ✅ **Data validation** - Robust error handling and data integrity
+### Time Tracking
+- **Task-based tracking** - Add tasks and track time spent
+- **Real-time display** - Live elapsed time counter
+- **Session management** - Start/stop tracking with one click
+- **Data validation** - Robust error handling and data integrity
 
-### 🍅 Pomodoro Timer
-- ✅ **Customizable durations** - Work, break, and long break times
-- ✅ **Session tracking** - Automatic session counting
-- ✅ **Sound notifications** - Audio alerts for completions
-- ✅ **Visual celebrations** - Balloons and success messages
+### Pomodoro Timer
+- **Customizable durations** - Work, break, and long break times
+- **Session tracking** - Automatic session counting
+- **Sound notifications** - Audio alerts for completions
+- **Visual celebrations** - Balloons and success messages
 
-### 📊 Advanced Analytics
-- ✅ **Productivity metrics** - Total time, sessions, consistency scores
-- ✅ **Interactive charts** - Time trends, task distribution, heatmaps
-- ✅ **Performance analysis** - Task efficiency and session patterns
-- ✅ **Weekly summaries** - Comprehensive time breakdowns
+### Advanced Analytics
+- **Productivity metrics** - Total time, sessions, consistency scores
+- **Interactive charts** - Time trends, task distribution, heatmaps
+- **Performance analysis** - Task efficiency and session patterns
+- **Weekly summaries** - Comprehensive time breakdowns
 
-### 💾 Data Management
-- ✅ **Export/Import** - CSV, JSON, Excel formats
-- ✅ **Automatic backups** - Scheduled data protection
-- ✅ **Data validation** - Integrity checks and error detection
-- ✅ **Backup cleanup** - Automatic old file management
+### Data Management
+- **Export/Import** - CSV, JSON, Excel formats
+- **Automatic backups** - Scheduled data protection
+- **Data validation** - Integrity checks and error detection
+- **Backup cleanup** - Automatic old file management
 
-### ⚙️ Settings & Configuration
-- ✅ **Comprehensive settings** - Pomodoro, UI, data, notifications
-- ✅ **Persistent storage** - Settings saved between sessions
-- ✅ **Reset functionality** - Restore defaults when needed
-- ✅ **Validation** - Settings validation and error handling
+### Settings & Configuration
+- **Comprehensive settings** - Pomodoro, UI, data, notifications
+- **Persistent storage** - Settings saved between sessions
+- **Reset functionality** - Restore defaults when needed
+- **Validation** - Settings validation and error handling
 
-### 🎨 User Interface
-- ✅ **Dark theme** - Modern, minimalist design
-- ✅ **Responsive layout** - Works on different screen sizes
-- ✅ **Intuitive navigation** - Tab-based interface
-- ✅ **Real-time updates** - Live timer and data refresh
+### User Interface
+- **Dark theme** - Modern, minimalist design
+- **Responsive layout** - Works on different screen sizes
+- **Intuitive navigation** - Tab-based interface
+- **Real-time updates** - Live timer and data refresh
 
-## 🔊 Sound Features
+## Sound Features
 
 - **Work Complete**: 3 beeps + celebration sound
 - **Break Complete**: Startup sound
 - **Background Detection**: Sounds work even when app is not in focus
 - **Customizable**: Enable/disable in settings
 
-## 📊 Data Storage
+## Data Storage
 
 Your time tracking data is automatically saved locally:
 
@@ -112,7 +112,7 @@ Your time tracking data is automatically saved locally:
 - **`logs/`** - Application logs (rotated daily)
 - **`backups/`** - Automatic backups (configurable frequency)
 
-## 🔧 Technical Details
+## Technical Details
 
 - **Python**: 3.8+ required
 - **Framework**: Streamlit 1.28+
@@ -121,7 +121,7 @@ Your time tracking data is automatically saved locally:
 - **Storage**: Local CSV files (no cloud dependency)
 - **Security**: All data stays on your device
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Installation Issues
 1. **Python not found**: Install Python 3.8+ from [python.org](https://python.org)
@@ -139,7 +139,7 @@ Your time tracking data is automatically saved locally:
 2. **Corrupted files**: Use the backup/restore feature in Data Management
 3. **Import errors**: Ensure CSV files match the expected format
 
-## 📈 Usage Tips
+## Usage Tips
 
 ### Getting Started
 1. **Add tasks** in the sidebar
@@ -159,7 +159,7 @@ Your time tracking data is automatically saved locally:
 3. **Backup management** - Clean up old backups periodically
 4. **Data validation** - Run integrity checks regularly
 
-## 💻 Creating Executable (.exe) Files
+## Creating Executable (.exe) Files
 
 ### Quick Build (Windows)
 ```bash
@@ -189,7 +189,7 @@ pyinstaller --clean --noconfirm time_tracker.spec
 2. Recipients just run `TimeTrackerPro.exe`
 3. All data stored locally in the `data` folder
 
-## 🔄 Updates & Maintenance
+## Updates & Maintenance
 
 ### Updating the Application
 1. Download the latest version
@@ -201,17 +201,17 @@ pyinstaller --clean --noconfirm time_tracker.spec
 - **Manual**: Use Data Management tab for manual operations
 - **Cleanup**: Old backups and logs are cleaned automatically
 
-## 📝 License
+## License
 
 This application is provided as-is for personal use. Feel free to modify and distribute according to your needs.
 
-## 🤝 Support
+## Support
 
 For issues, questions, or feature requests:
 1. Check the troubleshooting section above
 2. Review the application logs in the `logs/` directory
 3. Use the Data Management tab to diagnose data issues
 
-## 🎉 Enjoy Your Productivity Journey!
+## Enjoy Your Productivity Journey!
 
-Time Tracker Pro is designed to help you understand and improve your productivity patterns. Start tracking, stay focused, and achieve your goals! 🚀
+Time Tracker Pro is designed to help you understand and improve your productivity patterns. Start tracking, stay focused, and achieve your goals!
