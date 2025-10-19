@@ -49,8 +49,11 @@ class TimeTracker:
                 elif operation == 'write' and data is not None:
                     # Use atomic write with temporary file
                     temp_file = file_path + '.tmp'
+                    print(f"Writing {len(data)} rows to temporary file: {temp_file}")
                     data.to_csv(temp_file, index=False)
+                    print(f"Moving temporary file to final location: {file_path}")
                     shutil.move(temp_file, file_path)
+                    print(f"Successfully wrote {len(data)} rows to {file_path}")
                     return True
                 elif operation == 'append' and data is not None:
                     # Safe append operation
@@ -300,30 +303,36 @@ class TimeTracker:
         except Exception as e:
             print(f"Error updating all task totals: {e}")
     
-    def get_time_logs(self) -> pd.DataFrame:
+    def get_time_logs(self, force_reload=False) -> pd.DataFrame:
         """Get all time logs with error handling and caching"""
         try:
-            # Use cache if available and not cleared
-            if self._data_cache is not None:
+            # Force reload if requested or cache is None
+            if force_reload or self._data_cache is None:
+                print(f"Loading fresh data from {self.csv_file}")
+                df = self._safe_file_operation(self.csv_file, 'read')
+                if df is not None:
+                    # Clean any remaining data issues
+                    expected_columns = ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
+                    if list(df.columns) == expected_columns:
+                        self._data_cache = df  # Cache the data
+                        print(f"Loaded and cached {len(df)} rows")
+                        return df
+                    else:
+                        print("Warning: CSV columns don't match expected format, attempting to fix...")
+                        # Try to fix column issues
+                        df = df.iloc[:, :6]  # Take only first 6 columns
+                        df.columns = expected_columns
+                        self._data_cache = df  # Cache the data
+                        print(f"Fixed columns and cached {len(df)} rows")
+                        return df
+                df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
+                self._data_cache = df  # Cache the data
+                print("Created empty dataframe and cached")
+                return df
+            else:
+                print(f"Using cached data: {len(self._data_cache)} rows")
                 return self._data_cache
                 
-            df = self._safe_file_operation(self.csv_file, 'read')
-            if df is not None:
-                # Clean any remaining data issues
-                expected_columns = ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
-                if list(df.columns) == expected_columns:
-                    self._data_cache = df  # Cache the data
-                    return df
-                else:
-                    print("Warning: CSV columns don't match expected format, attempting to fix...")
-                    # Try to fix column issues
-                    df = df.iloc[:, :6]  # Take only first 6 columns
-                    df.columns = expected_columns
-                    self._data_cache = df  # Cache the data
-                    return df
-            df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
-            self._data_cache = df  # Cache the data
-            return df
         except Exception as e:
             print(f"Error reading time logs: {e}")
             df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
@@ -983,7 +992,14 @@ def update_time_logs(edited_df, original_df):
         # Get the complete dataset (not just the recent 50)
         complete_df = tracker.get_time_logs()
         
+        # Debug: Show what we're working with
+        st.write(f"**Debug: Complete dataset has {len(complete_df)} rows**")
+        st.write(f"**Debug: Edited dataset has {len(edited_df)} rows**")
+        
         # Process each edited row
+        rows_updated = 0
+        rows_deleted = 0
+        
         for idx in edited_df.index:
             if idx in complete_df.index:
                 row = edited_df.loc[idx]
@@ -992,6 +1008,8 @@ def update_time_logs(edited_df, original_df):
                 if 'delete' in edited_df.columns and row.get('delete', False):
                     # Remove this row
                     complete_df = complete_df.drop(idx)
+                    rows_deleted += 1
+                    st.write(f"**Debug: Deleted row {idx}**")
                 else:
                     # Skip empty rows (rows with no task name and no times)
                     if (pd.isna(row['task']) or not row['task'] or not str(row['task']).strip()) and \
@@ -999,11 +1017,15 @@ def update_time_logs(edited_df, original_df):
                        (pd.isna(row['end_time']) or not row['end_time']):
                         # Remove empty rows
                         complete_df = complete_df.drop(idx)
+                        rows_deleted += 1
+                        st.write(f"**Debug: Removed empty row {idx}**")
                         continue
                     
                     # Update the row with edited data (excluding delete column)
                     update_data = row.drop('delete') if 'delete' in edited_df.columns else row
                     complete_df.loc[idx] = update_data
+                    rows_updated += 1
+                    st.write(f"**Debug: Updated row {idx}**")
         
         # Recalculate duration for consistency
         complete_df['duration_minutes'] = (
@@ -1014,6 +1036,10 @@ def update_time_logs(edited_df, original_df):
         # Round duration to 2 decimal places
         complete_df['duration_minutes'] = complete_df['duration_minutes'].round(2)
         
+        # Debug: Show final dataset
+        st.write(f"**Debug: Final dataset has {len(complete_df)} rows**")
+        st.write(f"**Debug: Updated {rows_updated} rows, deleted {rows_deleted} rows**")
+        
         # Save to CSV using the tracker's safe file operation
         tracker._safe_file_operation(tracker.csv_file, 'write', complete_df)
         
@@ -1022,7 +1048,7 @@ def update_time_logs(edited_df, original_df):
         
         # Small delay to ensure file write is complete
         import time
-        time.sleep(0.1)
+        time.sleep(0.2)  # Increased delay
         
         # Update task totals
         tracker.update_all_task_totals()
@@ -1030,14 +1056,24 @@ def update_time_logs(edited_df, original_df):
         # Force refresh the session state data
         st.session_state.tracker._data_cache = None
         
+        # Additional verification: Read back the file to confirm
+        verification_df = pd.read_csv(tracker.csv_file)
+        st.write(f"**Debug: Verification - CSV file now has {len(verification_df)} rows**")
+        
+        # Force a complete refresh of the tracker instance
+        st.session_state.tracker = TimeTracker()
+        st.write("**Debug: Created fresh TimeTracker instance**")
+        
     except Exception as e:
+        st.error(f"Failed to update time logs: {e}")
         raise Exception(f"Failed to update time logs: {e}")
 
 def render_analytics_tab():
     """Render the Analytics tab with advanced visualizations"""
     st.markdown("# Advanced Analytics")
     
-    logs_df = st.session_state.tracker.get_time_logs()
+    # Force fresh data loading to ensure we have the latest data
+    logs_df = st.session_state.tracker.get_time_logs(force_reload=True)
     tasks_df = pd.read_csv(st.session_state.tracker.tasks_file) if os.path.exists(st.session_state.tracker.tasks_file) else pd.DataFrame()
     
     # Debug: Show what data was loaded
@@ -1054,6 +1090,28 @@ def render_analytics_tab():
             st.write(f"CSV file has {len(csv_df)} rows")
             st.write("CSV file sample:")
             st.dataframe(csv_df.head(3), use_container_width=True)
+            
+            # Compare loaded data with CSV data
+            if len(logs_df) == len(csv_df):
+                st.write("✅ **Data consistency check: PASSED** - Loaded data matches CSV file")
+            else:
+                st.write(f"❌ **Data consistency check: FAILED** - Loaded: {len(logs_df)}, CSV: {len(csv_df)}")
+                
+            # Check if specific rows match
+            if not logs_df.empty and not csv_df.empty:
+                # Compare first few rows
+                logs_sample = logs_df.head(3)[['task', 'start_time', 'end_time', 'duration_minutes']]
+                csv_sample = csv_df.head(3)[['task', 'start_time', 'end_time', 'duration_minutes']]
+                
+                if logs_sample.equals(csv_sample):
+                    st.write("✅ **Row content check: PASSED** - Sample rows match exactly")
+                else:
+                    st.write("❌ **Row content check: FAILED** - Sample rows differ")
+                    st.write("Loaded data sample:")
+                    st.dataframe(logs_sample, use_container_width=True)
+                    st.write("CSV file sample:")
+                    st.dataframe(csv_sample, use_container_width=True)
+                    
         except Exception as e:
             st.write(f"Error reading CSV file: {e}")
     
