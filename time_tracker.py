@@ -257,6 +257,48 @@ class TimeTracker:
         except Exception as e:
             print(f"Error updating total time for task {task_name}: {e}")
     
+    def update_all_task_totals(self):
+        """Recalculate all task totals based on current time logs"""
+        try:
+            # Get all time logs
+            logs_df = self.get_time_logs()
+            if logs_df.empty:
+                return
+            
+            # Calculate total time per task
+            task_totals = logs_df.groupby('task_name')['duration_minutes'].sum().reset_index()
+            task_totals.columns = ['task_name', 'total_time_minutes']
+            
+            # Get existing tasks
+            tasks_df = self._safe_file_operation(self.tasks_file, 'read')
+            if tasks_df is None:
+                tasks_df = pd.DataFrame(columns=['task_name', 'total_time_minutes'])
+            
+            # Update or add task totals
+            for _, row in task_totals.iterrows():
+                task_name = row['task_name']
+                total_time = row['total_time_minutes']
+                
+                # Check if task exists
+                mask = tasks_df['task_name'] == task_name
+                if mask.any():
+                    # Update existing task
+                    tasks_df.loc[mask, 'total_time_minutes'] = total_time
+                else:
+                    # Add new task
+                    new_task = pd.DataFrame({
+                        'task_name': [task_name],
+                        'total_time_minutes': [total_time]
+                    })
+                    tasks_df = pd.concat([tasks_df, new_task], ignore_index=True)
+            
+            # Save updated tasks
+            self._safe_file_operation(self.tasks_file, 'write', tasks_df)
+            print("Updated all task totals based on current time logs")
+            
+        except Exception as e:
+            print(f"Error updating all task totals: {e}")
+    
     def get_time_logs(self) -> pd.DataFrame:
         """Get all time logs with error handling"""
         try:
@@ -857,6 +899,96 @@ def render_main_ui():
     with tab5:
         render_about_tab()
 
+def validate_time_log_changes(original_df, edited_df):
+    """Validate changes made to time logs"""
+    try:
+        # Check if all required columns are present
+        required_cols = ['task_name', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
+        if not all(col in edited_df.columns for col in required_cols):
+            return False
+        
+        # Validate each row (skip rows marked for deletion)
+        for idx, row in edited_df.iterrows():
+            # Skip validation for rows marked for deletion
+            if 'delete' in edited_df.columns and row.get('delete', False):
+                continue
+                
+            # Check task name
+            if not row['task_name'] or not str(row['task_name']).strip():
+                return False
+            
+            # Check time format and logic
+            try:
+                start_time = pd.to_datetime(row['start_time'])
+                end_time = pd.to_datetime(row['end_time'])
+                
+                if start_time >= end_time:
+                    return False
+                
+                # Check duration consistency
+                calculated_duration = (end_time - start_time).total_seconds() / 60
+                if abs(calculated_duration - row['duration_minutes']) > 0.1:  # Allow small rounding differences
+                    return False
+                
+            except (ValueError, TypeError):
+                return False
+            
+            # Check date format
+            try:
+                pd.to_datetime(row['date'])
+            except (ValueError, TypeError):
+                return False
+            
+            # Check session type
+            if row['session_type'] not in ['work', 'break', 'long_break']:
+                return False
+        
+        return True
+        
+    except Exception:
+        return False
+
+def update_time_logs(edited_df, original_df):
+    """Update the time logs CSV file with edited data"""
+    try:
+        # Get the tracker instance
+        tracker = st.session_state.tracker
+        
+        # Create a copy of the original dataframe
+        updated_df = original_df.copy()
+        
+        # Process each edited row
+        for idx in edited_df.index:
+            if idx in updated_df.index:
+                row = edited_df.loc[idx]
+                
+                # Check if row is marked for deletion
+                if 'delete' in edited_df.columns and row.get('delete', False):
+                    # Remove this row
+                    updated_df = updated_df.drop(idx)
+                else:
+                    # Update the row with edited data (excluding delete column)
+                    update_data = row.drop('delete') if 'delete' in edited_df.columns else row
+                    updated_df.loc[idx] = update_data
+        
+        # Recalculate duration for consistency
+        updated_df['duration_minutes'] = (
+            pd.to_datetime(updated_df['end_time']) - 
+            pd.to_datetime(updated_df['start_time'])
+        ).dt.total_seconds() / 60
+        
+        # Round duration to 2 decimal places
+        updated_df['duration_minutes'] = updated_df['duration_minutes'].round(2)
+        
+        # Save to CSV using the tracker's safe file operation
+        tracker._safe_file_operation(tracker.csv_file, 'write', updated_df)
+        
+        # Update task totals
+        tracker.update_all_task_totals()
+        
+    except Exception as e:
+        raise Exception(f"Failed to update time logs: {e}")
+
 def render_analytics_tab():
     """Render the Analytics tab with advanced visualizations"""
     st.markdown("# Advanced Analytics")
@@ -914,6 +1046,65 @@ def render_analytics_tab():
             st.dataframe(performance_df, use_container_width=True)
         else:
             st.info("No task performance data available")
+    
+    # Data editing section
+    st.markdown("## Edit Time Entries")
+    st.markdown("Correct inaccurate time logs or remove unwanted entries.")
+    
+    # Get recent time logs for editing
+    recent_logs = logs_df.tail(50)  # Show last 50 entries
+    
+    if not recent_logs.empty:
+        st.markdown("### Recent Time Entries")
+        
+        # Add a delete column for better user control
+        logs_with_delete = recent_logs.copy()
+        logs_with_delete['delete'] = False
+        
+        # Create editable dataframe
+        edited_df = st.data_editor(
+            logs_with_delete[['task_name', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type', 'delete']],
+            num_rows="dynamic",
+            use_container_width=True,
+            key="time_logs_editor",
+            column_config={
+                "delete": st.column_config.CheckboxColumn(
+                    "Delete",
+                    help="Check to mark for deletion",
+                    default=False,
+                )
+            }
+        )
+        
+        # Action buttons
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("Save Changes", type="primary"):
+                try:
+                    # Validate changes
+                    if validate_time_log_changes(recent_logs, edited_df):
+                        # Update the CSV file
+                        update_time_logs(edited_df, logs_df)
+                        st.success("Time entries updated successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Invalid data detected. Please check your entries.")
+                except Exception as e:
+                    st.error(f"Error updating time entries: {e}")
+        
+        with col2:
+            if st.button("Reset Changes"):
+                st.rerun()
+        
+        with col3:
+            st.markdown("**Instructions:**")
+            st.markdown("- Edit any field to modify entries")
+            st.markdown("- Check 'Delete' to remove entries")
+            st.markdown("- Click 'Save Changes' to apply")
+    
+    else:
+        st.info("No time entries available for editing.")
 
 def render_data_management_tab():
     """Render the Data Management tab"""
