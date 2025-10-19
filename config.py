@@ -21,9 +21,9 @@ TASKS_FILE = DATA_DIR / "tasks.csv"
 SETTINGS_FILE = DATA_DIR / "settings.json"
 
 # Default Pomodoro settings
-DEFAULT_WORK_DURATION = 25  # minutes
-DEFAULT_BREAK_DURATION = 5  # minutes
-DEFAULT_LONG_BREAK_DURATION = 15  # minutes
+DEFAULT_WORK_DURATION = 25.0  # minutes
+DEFAULT_BREAK_DURATION = 5.0  # minutes
+DEFAULT_LONG_BREAK_DURATION = 15.0  # minutes
 DEFAULT_SESSIONS_BEFORE_LONG_BREAK = 4
 
 # Timer settings

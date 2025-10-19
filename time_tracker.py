@@ -1085,7 +1085,7 @@ def render_settings_tab():
     
     with st.form("ui_settings"):
         theme = st.selectbox("Theme", ["dark", "light"], index=0)
-        auto_refresh = st.number_input("Auto-refresh interval (seconds)", min_value=1, max_value=60, value=3)
+        auto_refresh = st.number_input("Auto-refresh interval (seconds)", min_value=1.0, max_value=60.0, value=3.0)
         show_notifications = st.checkbox("Show notifications", value=True)
         
         if st.form_submit_button("Save UI Settings"):
@@ -1106,8 +1106,8 @@ def render_settings_tab():
     
     with st.form("data_settings"):
         auto_backup = st.checkbox("Enable automatic backups", value=True)
-        backup_frequency = st.number_input("Backup frequency (days)", min_value=1, max_value=30, value=7)
-        max_backups = st.number_input("Maximum backup files", min_value=1, max_value=50, value=10)
+        backup_frequency = st.number_input("Backup frequency (days)", min_value=1.0, max_value=30.0, value=7.0)
+        max_backups = st.number_input("Maximum backup files", min_value=1.0, max_value=50.0, value=10.0)
         
         if st.form_submit_button("Save Data Settings"):
             data_settings = {
