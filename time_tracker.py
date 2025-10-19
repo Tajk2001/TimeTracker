@@ -231,7 +231,7 @@ class TimeTracker:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
                 original_count = len(df)
-            df = df[df['task_name'] != task_name]
+                df = df[df['task_name'] != task_name]
                 if len(df) < original_count:
                     self._safe_file_operation(self.tasks_file, 'write', df)
                     print(f"Successfully deleted task: {task_name}")
@@ -245,11 +245,11 @@ class TimeTracker:
         try:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
-            mask = df['task_name'] == task_name
-            if mask.any():
-                # Convert to float to avoid dtype warnings
+                mask = df['task_name'] == task_name
+                if mask.any():
+                    # Convert to float to avoid dtype warnings
                     df['total_time_minutes'] = pd.to_numeric(df['total_time_minutes'], errors='coerce').fillna(0)
-                df.loc[mask, 'total_time_minutes'] += duration
+                    df.loc[mask, 'total_time_minutes'] += duration
                     self._safe_file_operation(self.tasks_file, 'write', df)
                     print(f"Updated total time for {task_name}: +{duration:.2f} minutes")
                 else:
@@ -280,9 +280,9 @@ class TimeTracker:
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
         try:
-        logs_df = self.get_time_logs()
-        
-        if logs_df.empty:
+            logs_df = self.get_time_logs()
+            
+            if logs_df.empty:
                 return {
                     'total_time': 0,
                     'total_sessions': 0,
@@ -293,42 +293,42 @@ class TimeTracker:
                     'week_sessions': 0,
                     'task_breakdown': {}
                 }
-        
-        stats = {}
+            
+            stats = {}
             
             # Convert duration to numeric, handle any non-numeric values
             logs_df['duration_minutes'] = pd.to_numeric(logs_df['duration_minutes'], errors='coerce').fillna(0)
+            
+            # Overall statistics
+            stats['total_time'] = logs_df['duration_minutes'].sum()
+            stats['total_sessions'] = len(logs_df)
+            stats['unique_tasks'] = logs_df['task'].nunique()
+            
+            # Today's statistics
+            today = datetime.datetime.now().strftime('%Y-%m-%d')
+            today_logs = logs_df[logs_df['date'] == today]
+            stats['today_time'] = today_logs['duration_minutes'].sum()
+            stats['today_sessions'] = len(today_logs)
+            
+            # This week's statistics
+            week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+            week_logs = logs_df[logs_df['date'] >= week_ago]
+            stats['week_time'] = week_logs['duration_minutes'].sum()
+            stats['week_sessions'] = len(week_logs)
         
-        # Overall statistics
-        stats['total_time'] = logs_df['duration_minutes'].sum()
-        stats['total_sessions'] = len(logs_df)
-        stats['unique_tasks'] = logs_df['task'].nunique()
-        
-        # Today's statistics
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        today_logs = logs_df[logs_df['date'] == today]
-        stats['today_time'] = today_logs['duration_minutes'].sum()
-        stats['today_sessions'] = len(today_logs)
-        
-        # This week's statistics
-        week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
-        week_logs = logs_df[logs_df['date'] >= week_ago]
-        stats['week_time'] = week_logs['duration_minutes'].sum()
-        stats['week_sessions'] = len(week_logs)
-        
-        # Task-specific statistics
+            # Task-specific statistics
             if not logs_df.empty:
-        task_stats = logs_df.groupby('task').agg({
-            'duration_minutes': ['sum', 'count', 'mean'],
-            'date': 'nunique'
-        }).round(2)
-        
-        task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
-        stats['task_breakdown'] = task_stats.to_dict('index')
+                task_stats = logs_df.groupby('task').agg({
+                    'duration_minutes': ['sum', 'count', 'mean'],
+                    'date': 'nunique'
+                }).round(2)
+                
+                task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
+                stats['task_breakdown'] = task_stats.to_dict('index')
             else:
                 stats['task_breakdown'] = {}
-        
-        return stats
+            
+            return stats
             
         except Exception as e:
             print(f"Error calculating statistics: {e}")
@@ -458,12 +458,12 @@ def main():
     log_app_start()
     
     try:
-    st.set_page_config(
+        st.set_page_config(
             page_title=APP_NAME,
             page_icon="🕐",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
+            layout="wide",
+            initial_sidebar_state="expanded"
+        )
         
         # Initialize managers
         data_manager = DataManager()
@@ -880,7 +880,7 @@ def render_analytics_tab():
         
         with col1:
             st.metric("Total Time", f"{metrics.get('total_time_hours', 0):.1f} hrs")
-            with col2:
+        with col2:
             st.metric("Sessions", f"{metrics.get('total_sessions', 0)}")
         with col3:
             st.metric("Avg Session", f"{metrics.get('avg_session_length', 0):.1f} min")
@@ -975,7 +975,7 @@ def render_data_management_tab():
                 if st.button("Import Data"):
                     if data_manager.import_data(import_data):
                         st.success("Data imported successfully!")
-                    st.rerun()
+                        st.rerun()
                     else:
                         st.error("Failed to import data")
             except Exception as e:
@@ -991,7 +991,7 @@ def render_data_management_tab():
             backup_name = data_manager.create_backup()
             if backup_name:
                 st.success(f"Backup created: {backup_name}")
-                else:
+            else:
                 st.error("Failed to create backup")
     
     with backup_col2:
@@ -1052,33 +1052,33 @@ def render_settings_tab():
                 max_value=10,
                 value=settings_manager.get_setting('pomodoro', 'sessions_before_long_break', 4)
             )
-        
-        auto_start_breaks = st.checkbox(
-            "Auto-start breaks",
-            value=settings_manager.get_setting('pomodoro', 'auto_start_breaks', True)
-        )
-        
-        sound_enabled = st.checkbox(
-            "Enable sounds",
-            value=settings_manager.get_setting('pomodoro', 'sound_enabled', True)
-        )
-        
-        if st.form_submit_button("Save Pomodoro Settings", type="primary"):
-            pomodoro_settings = {
-                'work_duration': work_duration,
-                'break_duration': break_duration,
-                'long_break_duration': long_break_duration,
-                'sessions_before_long_break': sessions_before_long_break,
-                'auto_start_breaks': auto_start_breaks,
-                'sound_enabled': sound_enabled
-            }
             
-            if settings_manager.set_pomodoro_settings(pomodoro_settings):
-                settings_manager.save_settings()
-                st.success("Pomodoro settings saved!")
+            auto_start_breaks = st.checkbox(
+                "Auto-start breaks",
+                value=settings_manager.get_setting('pomodoro', 'auto_start_breaks', True)
+            )
+            
+            sound_enabled = st.checkbox(
+                "Enable sounds",
+                value=settings_manager.get_setting('pomodoro', 'sound_enabled', True)
+            )
+            
+            if st.form_submit_button("Save Pomodoro Settings", type="primary"):
+                pomodoro_settings = {
+                    'work_duration': work_duration,
+                    'break_duration': break_duration,
+                    'long_break_duration': long_break_duration,
+                    'sessions_before_long_break': sessions_before_long_break,
+                    'auto_start_breaks': auto_start_breaks,
+                    'sound_enabled': sound_enabled
+                }
+                
+                if settings_manager.set_pomodoro_settings(pomodoro_settings):
+                    settings_manager.save_settings()
+                    st.success("Pomodoro settings saved!")
                     st.rerun()
-            else:
-                st.error("Failed to save settings")
+                else:
+                    st.error("Failed to save settings")
     
     # UI settings
     st.markdown("## Interface")
