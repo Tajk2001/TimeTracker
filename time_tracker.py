@@ -1020,6 +1020,10 @@ def update_time_logs(edited_df, original_df):
         # Debug: Verify the file was written
         st.info(f"✅ Data saved to {tracker.csv_file} - {len(complete_df)} rows")
         
+        # Small delay to ensure file write is complete
+        import time
+        time.sleep(0.1)
+        
         # Update task totals
         tracker.update_all_task_totals()
         
@@ -1041,6 +1045,17 @@ def render_analytics_tab():
     if not logs_df.empty:
         st.write("Sample of loaded data:")
         st.dataframe(logs_df.head(3), use_container_width=True)
+        
+        # Debug: Show the actual CSV file contents
+        st.write("**Debug: Checking CSV file directly:**")
+        try:
+            import pandas as pd
+            csv_df = pd.read_csv("time_logs.csv")
+            st.write(f"CSV file has {len(csv_df)} rows")
+            st.write("CSV file sample:")
+            st.dataframe(csv_df.head(3), use_container_width=True)
+        except Exception as e:
+            st.write(f"Error reading CSV file: {e}")
     
     if logs_df.empty:
         st.info("No data available for analytics. Start tracking time to see insights!")
