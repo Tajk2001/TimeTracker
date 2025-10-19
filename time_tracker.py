@@ -35,6 +35,7 @@ class TimeTracker:
     def __init__(self):
         self.csv_file = "time_logs.csv"
         self.tasks_file = "tasks.csv"
+        self._data_cache = None  # Cache for data to avoid repeated file reads
         self.initialize_files()
         self.cleanup_corrupted_data()
         
@@ -300,24 +301,34 @@ class TimeTracker:
             print(f"Error updating all task totals: {e}")
     
     def get_time_logs(self) -> pd.DataFrame:
-        """Get all time logs with error handling"""
+        """Get all time logs with error handling and caching"""
         try:
+            # Use cache if available and not cleared
+            if self._data_cache is not None:
+                return self._data_cache
+                
             df = self._safe_file_operation(self.csv_file, 'read')
             if df is not None:
                 # Clean any remaining data issues
                 expected_columns = ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
                 if list(df.columns) == expected_columns:
+                    self._data_cache = df  # Cache the data
                     return df
                 else:
                     print("Warning: CSV columns don't match expected format, attempting to fix...")
                     # Try to fix column issues
                     df = df.iloc[:, :6]  # Take only first 6 columns
                     df.columns = expected_columns
+                    self._data_cache = df  # Cache the data
                     return df
-            return pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
+            df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
+            self._data_cache = df  # Cache the data
+            return df
         except Exception as e:
             print(f"Error reading time logs: {e}")
-            return pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
+            df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
+            self._data_cache = df  # Cache the data
+            return df
     
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
@@ -969,45 +980,48 @@ def update_time_logs(edited_df, original_df):
         # Get the tracker instance
         tracker = st.session_state.tracker
         
-        # Create a copy of the original dataframe
-        updated_df = original_df.copy()
+        # Get the complete dataset (not just the recent 50)
+        complete_df = tracker.get_time_logs()
         
         # Process each edited row
         for idx in edited_df.index:
-            if idx in updated_df.index:
+            if idx in complete_df.index:
                 row = edited_df.loc[idx]
                 
                 # Check if row is marked for deletion
                 if 'delete' in edited_df.columns and row.get('delete', False):
                     # Remove this row
-                    updated_df = updated_df.drop(idx)
+                    complete_df = complete_df.drop(idx)
                 else:
                     # Skip empty rows (rows with no task name and no times)
                     if (pd.isna(row['task']) or not row['task'] or not str(row['task']).strip()) and \
                        (pd.isna(row['start_time']) or not row['start_time']) and \
                        (pd.isna(row['end_time']) or not row['end_time']):
                         # Remove empty rows
-                        updated_df = updated_df.drop(idx)
+                        complete_df = complete_df.drop(idx)
                         continue
                     
                     # Update the row with edited data (excluding delete column)
                     update_data = row.drop('delete') if 'delete' in edited_df.columns else row
-                    updated_df.loc[idx] = update_data
+                    complete_df.loc[idx] = update_data
         
         # Recalculate duration for consistency
-        updated_df['duration_minutes'] = (
-            pd.to_datetime(updated_df['end_time']) - 
-            pd.to_datetime(updated_df['start_time'])
+        complete_df['duration_minutes'] = (
+            pd.to_datetime(complete_df['end_time']) - 
+            pd.to_datetime(complete_df['start_time'])
         ).dt.total_seconds() / 60
         
         # Round duration to 2 decimal places
-        updated_df['duration_minutes'] = updated_df['duration_minutes'].round(2)
+        complete_df['duration_minutes'] = complete_df['duration_minutes'].round(2)
         
         # Save to CSV using the tracker's safe file operation
-        tracker._safe_file_operation(tracker.csv_file, 'write', updated_df)
+        tracker._safe_file_operation(tracker.csv_file, 'write', complete_df)
         
         # Update task totals
         tracker.update_all_task_totals()
+        
+        # Force refresh the session state data
+        st.session_state.tracker._data_cache = None
         
     except Exception as e:
         raise Exception(f"Failed to update time logs: {e}")
