@@ -179,7 +179,7 @@ class TimeTracker:
         try:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
-            return df.to_dict('records')
+                return df.to_dict('records')
             return []
         except Exception as e:
             print(f"Error reading tasks: {e}")
