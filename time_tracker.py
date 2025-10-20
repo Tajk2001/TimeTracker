@@ -183,7 +183,7 @@ class TimeTracker:
         try:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
-            return df.to_dict('records')
+                return df.to_dict("records")
             return []
         except Exception as e:
             print(f"Error reading tasks: {e}")
@@ -199,7 +199,7 @@ class TimeTracker:
             if start_time >= end_time:
                 raise ValueError("Start time must be before end time")
             
-        duration = (end_time - start_time).total_seconds() / 60
+            duration = (end_time - start_time).total_seconds() / 60
             if duration <= 0:
                 raise ValueError("Duration must be positive")
             
@@ -220,9 +220,9 @@ class TimeTracker:
             # Write to file safely
             self._safe_file_operation(self.csv_file, 'append', log_entry)
         
-        # Update task total time
-        self.update_task_total_time(task, duration)
             
+            # Update task total time
+            self.update_task_total_time(task, duration)
             print(f"Successfully logged {duration:.2f} minutes for task: {task}")
             
         except Exception as e:
@@ -236,11 +236,11 @@ class TimeTracker:
             if df is not None:
                 original_count = len(df)
             df = df[df['task_name'] != task_name]
-                if len(df) < original_count:
-                    self._safe_file_operation(self.tasks_file, 'write', df)
-                    print(f"Successfully deleted task: {task_name}")
-                else:
-                    print(f"Task not found: {task_name}")
+            if len(df) < original_count:
+                self._safe_file_operation(self.tasks_file, 'write', df)
+                print(f"Successfully deleted task: {task_name}")
+            else:
+                print(f"Task not found: {task_name}")
         except Exception as e:
             print(f"Error deleting task {task_name}: {e}")
     
@@ -249,12 +249,12 @@ class TimeTracker:
         try:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
-            mask = df['task_name'] == task_name
-            if mask.any():
-                # Convert to float to avoid dtype warnings
-                    df['total_time_minutes'] = pd.to_numeric(df['total_time_minutes'], errors='coerce').fillna(0)
-                df.loc[mask, 'total_time_minutes'] += duration
-                    self._safe_file_operation(self.tasks_file, 'write', df)
+                mask = df["task_name"] == task_name
+                if mask.any():
+                    # Convert to float to avoid dtype warnings
+                    df["total_time_minutes"] = pd.to_numeric(df["total_time_minutes"], errors="coerce").fillna(0)
+                    df.loc[mask, "total_time_minutes"] += duration
+                    self._safe_file_operation(self.tasks_file, "write", df)
                     print(f"Updated total time for {task_name}: +{duration:.2f} minutes")
                 else:
                     print(f"Warning: Task '{task_name}' not found in tasks file")

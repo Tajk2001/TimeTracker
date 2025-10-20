@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Time Tracker Pro - Executable Builder
-Creates a standalone .exe file for Windows distribution
+Time Tracker Pro - macOS App Builder
+Creates a standalone macOS application bundle
 """
 
 import os
@@ -14,14 +14,14 @@ def check_requirements():
     """Check if all requirements are met for building"""
     print("Checking build requirements...")
     
-    # Check if we're on Windows or have Wine
-    if sys.platform == "win32":
-        print("Running on Windows")
+    # Check if we're on macOS
+    if sys.platform == "darwin":
+        print("Running on macOS")
         return True
     else:
-        print("Not running on Windows - you'll need Wine or a Windows machine")
-        print("   This script will still work but the .exe won't be testable")
-        return True
+        print("This script is designed for macOS only")
+        print("   For other platforms, use the Python version directly")
+        return False
 
 def install_pyinstaller():
     """Install PyInstaller if not already installed"""
@@ -29,33 +29,33 @@ def install_pyinstaller():
     
     try:
         subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller>=6.0.0"], check=True)
-        print("✅ PyInstaller installed successfully")
+        print("PyInstaller installed successfully")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to install PyInstaller: {e}")
+        print(f"Failed to install PyInstaller: {e}")
         return False
 
 def create_icon():
     """Create a simple icon file if it doesn't exist"""
-    icon_path = Path("icon.ico")
+    icon_path = Path("icon.icns")
     if not icon_path.exists():
-        print("🎨 Creating application icon...")
+        print("Creating application icon...")
         # Create a simple text-based icon placeholder
-        # In a real scenario, you'd want a proper .ico file
-        print("⚠️  No icon.ico found - executable will use default icon")
-        print("   To add a custom icon, place an icon.ico file in the project directory")
+        # In a real scenario, you'd want a proper .icns file
+        print("No icon.icns found - app will use default icon")
+        print("   To add a custom icon, place an icon.icns file in the project directory")
     else:
-        print("✅ Icon file found")
+        print("Icon file found")
 
 def clean_build_directories():
     """Clean previous build artifacts"""
-    print("🧹 Cleaning previous build artifacts...")
+    print("Cleaning previous build artifacts...")
     
     dirs_to_clean = ["build", "dist", "__pycache__"]
     for dir_name in dirs_to_clean:
         if os.path.exists(dir_name):
             shutil.rmtree(dir_name)
-            print(f"✅ Cleaned {dir_name}/")
+            print(f"Cleaned {dir_name}/")
     
     # Clean .pyc files
     for root, dirs, files in os.walk("."):
@@ -64,26 +64,36 @@ def clean_build_directories():
                 os.remove(os.path.join(root, file))
 
 def build_executable():
-    """Build the executable using PyInstaller"""
-    print("🔨 Building executable...")
+    """Build the macOS app using PyInstaller"""
+    print("Building macOS application...")
     
     try:
-        # Use the spec file for better control
+        # Build macOS app bundle
         cmd = [
             sys.executable, "-m", "PyInstaller",
             "--clean",
             "--noconfirm",
-            "time_tracker.spec"
+            "--windowed",
+            "--onedir",
+            "--name", "TimeTrackerPro",
+            "--add-data", "time_logs.csv:.",
+            "--add-data", "tasks.csv:.",
+            "--add-data", "config.py:.",
+            "--add-data", "analytics.py:.",
+            "--add-data", "data_manager.py:.",
+            "--add-data", "logger.py:.",
+            "--add-data", "settings_manager.py:.",
+            "time_tracker.py"
         ]
         
         print(f"Running: {' '.join(cmd)}")
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
         
-        print("✅ Executable built successfully!")
+        print("macOS application built successfully!")
         return True
         
     except subprocess.CalledProcessError as e:
-        print(f"❌ Build failed: {e}")
+        print(f"Build failed: {e}")
         if e.stdout:
             print("STDOUT:", e.stdout)
         if e.stderr:
@@ -91,26 +101,26 @@ def build_executable():
         return False
 
 def create_portable_package():
-    """Create a portable package with the executable"""
-    print("📦 Creating portable package...")
+    """Create a portable package with the macOS app"""
+    print("Creating portable package...")
     
     dist_dir = Path("dist")
-    package_dir = Path("TimeTrackerPro_Portable")
+    package_dir = Path("TimeTrackerPro_macOS")
     
     if package_dir.exists():
         shutil.rmtree(package_dir)
     
     package_dir.mkdir()
     
-    # Copy executable
-    exe_name = "TimeTrackerPro.exe" if sys.platform == "win32" else "TimeTrackerPro"
-    exe_path = dist_dir / exe_name
+    # Copy app bundle
+    app_name = "TimeTrackerPro.app"
+    app_path = dist_dir / app_name
     
-    if exe_path.exists():
-        shutil.copy2(exe_path, package_dir / exe_name)
-        print(f"✅ Copied executable: {exe_name}")
+    if app_path.exists():
+        shutil.copytree(app_path, package_dir / app_name)
+        print(f"Copied app bundle: {app_name}")
     else:
-        print(f"❌ Executable not found: {exe_path}")
+        print(f"App bundle not found: {app_path}")
         return False
     
     # Create data directory
@@ -122,28 +132,28 @@ def create_portable_package():
     for file_name in data_files:
         if os.path.exists(file_name):
             shutil.copy2(file_name, data_dir / file_name)
-            print(f"✅ Copied data file: {file_name}")
+            print(f"Copied data file: {file_name}")
     
     # Create directories
     (package_dir / "logs").mkdir()
     (package_dir / "backups").mkdir()
     
-    # Create README for portable version
-    readme_content = """# Time Tracker Pro - Portable Version
+    # Create README for macOS version
+    readme_content = """# Time Tracker Pro - macOS Version
 
 ## Quick Start
-1. Double-click TimeTrackerPro.exe to start the application
+1. Double-click TimeTrackerPro.app to start the application
 2. The app will open in your browser at http://localhost:8501
 3. Your data will be saved in the 'data' folder
 
 ## Features
-- ✅ Standalone executable (no installation required)
-- ✅ All data stored locally in the 'data' folder
-- ✅ Automatic backups in the 'backups' folder
-- ✅ Application logs in the 'logs' folder
+- Standalone macOS application (no installation required)
+- All data stored locally in the 'data' folder
+- Automatic backups in the 'backups' folder
+- Application logs in the 'logs' folder
 
 ## System Requirements
-- Windows 10 or later
+- macOS 10.14 or later
 - No additional software required
 
 ## Data Storage
@@ -152,53 +162,53 @@ def create_portable_package():
 - settings.json - Application settings
 
 ## Troubleshooting
-- If the app won't start, check Windows Defender/Antivirus
+- If the app won't start, check System Preferences > Security & Privacy
 - Make sure port 8501 is available
 - Check the logs folder for error messages
 
-Enjoy your productivity journey! 🚀
+Enjoy your productivity journey!
 """
     
     with open(package_dir / "README.txt", "w") as f:
         f.write(readme_content)
     
-    print(f"✅ Portable package created: {package_dir}")
+    print(f"Portable package created: {package_dir}")
     return True
 
 def test_executable():
-    """Test the executable (if on Windows)"""
-    if sys.platform != "win32":
-        print("⚠️  Cannot test executable on non-Windows system")
+    """Test the macOS app"""
+    if sys.platform != "darwin":
+        print("Cannot test macOS app on non-macOS system")
         return True
     
-    print("🧪 Testing executable...")
+    print("Testing macOS application...")
     
-    exe_path = Path("dist") / "TimeTrackerPro.exe"
-    if not exe_path.exists():
-        print("❌ Executable not found for testing")
+    app_path = Path("dist") / "TimeTrackerPro.app"
+    if not app_path.exists():
+        print("App bundle not found for testing")
         return False
     
     try:
-        # Test if executable runs (with timeout)
-        print("Starting executable test...")
-        process = subprocess.Popen([str(exe_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Test if app runs (with timeout)
+        print("Starting app test...")
+        process = subprocess.Popen(["open", str(app_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
         # Wait a few seconds then terminate
         import time
         time.sleep(5)
         process.terminate()
         
-        print("✅ Executable test completed")
+        print("macOS app test completed")
         return True
         
     except Exception as e:
-        print(f"❌ Executable test failed: {e}")
+        print(f"macOS app test failed: {e}")
         return False
 
 def main():
     """Main build function"""
     print("=" * 60)
-    print("🚀 Time Tracker Pro - Executable Builder")
+    print("Time Tracker Pro - macOS App Builder")
     print("   Version 2.0.0")
     print("=" * 60)
     
@@ -224,20 +234,20 @@ def main():
     if not create_portable_package():
         return False
     
-    # Test executable (if on Windows)
+    # Test executable (if on macOS)
     test_executable()
     
     print("\n" + "=" * 60)
-    print("🎉 Executable build completed successfully!")
+    print("macOS application build completed successfully!")
     print("=" * 60)
-    print("\n📁 Output files:")
-    print("   - dist/TimeTrackerPro.exe (standalone executable)")
-    print("   - TimeTrackerPro_Portable/ (complete portable package)")
-    print("\n🚀 To distribute:")
-    print("   1. Share the entire 'TimeTrackerPro_Portable' folder")
-    print("   2. Recipients just need to run TimeTrackerPro.exe")
+    print("\nOutput files:")
+    print("   - dist/TimeTrackerPro.app (macOS application bundle)")
+    print("   - TimeTrackerPro_macOS/ (complete portable package)")
+    print("\nTo distribute:")
+    print("   1. Share the entire 'TimeTrackerPro_macOS' folder")
+    print("   2. Recipients just need to run TimeTrackerPro.app")
     print("   3. No Python installation required!")
-    print("\n⚠️  Note: The executable is quite large (~200MB) due to")
+    print("\nNote: The app bundle is quite large (~200MB) due to")
     print("   bundling all dependencies. This is normal for PyInstaller.")
     
     return True
