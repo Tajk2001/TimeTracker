@@ -522,7 +522,7 @@ def main():
     try:
         st.set_page_config(
             page_title=APP_NAME,
-            page_icon="🕐",
+            page_icon=None,
         layout="wide",
         initial_sidebar_state="expanded"
     )
@@ -1200,6 +1200,7 @@ def render_analytics_tab():
         col1, col2, col3 = st.columns(3)
         
         with col1:
+            st.caption("Hint: If you edit start_time or end_time, set both so duration updates correctly before saving.")
             if st.button("Save Changes", type="primary"):
                 try:
                     # Validate changes
