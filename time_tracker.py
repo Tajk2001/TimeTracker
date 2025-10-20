@@ -221,7 +221,7 @@ class TimeTracker:
             self._safe_file_operation(self.csv_file, 'append', log_entry)
         
         
-            
+        
             # Update task total time
             self.update_task_total_time(task, duration)
             
@@ -357,7 +357,7 @@ class TimeTracker:
                 }
         
             stats = {}
-            
+        
             # Convert duration to numeric, handle any non-numeric values
             logs_df['duration_minutes'] = pd.to_numeric(logs_df['duration_minutes'], errors='coerce').fillna(0)
         
@@ -366,6 +366,7 @@ class TimeTracker:
             stats["total_time"] = logs_df["duration_minutes"].sum()
             stats["total_sessions"] = len(logs_df)
             stats["unique_tasks"] = logs_df["task"].nunique()
+        # Today's statistics
         # Today's statistics
             # Today's statistics
             today = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -378,7 +379,6 @@ class TimeTracker:
             week_logs = logs_df[logs_df['date'] >= week_ago]
             stats['week_time'] = week_logs['duration_minutes'].sum()
             stats['week_sessions'] = len(week_logs)
-        # Task-specific statistics
             if not logs_df.empty:
                 task_stats = logs_df.groupby('task').agg({
                     'duration_minutes': ['sum', 'count', 'mean'],
@@ -1087,7 +1087,6 @@ def render_analytics_tab():
         # Debug: Show the actual CSV file contents
         st.write("**Debug: Checking CSV file directly:**")
         try:
-            import pandas as pd
             csv_df = pd.read_csv("time_logs.csv")
             st.write(f"CSV file has {len(csv_df)} rows")
             st.write("CSV file sample:")
@@ -1288,12 +1287,12 @@ def render_data_management_tab():
                     if data_manager.import_data(import_data):
                         st.success("Data imported successfully!")
                         st.success("Data imported successfully!")
+                        st.success("Data imported successfully!")
                         st.rerun()
                     else:
                         st.error("Failed to import data")
             except Exception as e:
                 st.error(f"Import error: {e}")
-    # Backup section
         st.markdown("## Backup Management")
     
     backup_col1, backup_col2 = st.columns(2)
