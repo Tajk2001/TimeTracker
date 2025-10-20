@@ -1085,7 +1085,6 @@ def render_analytics_tab():
         # Debug: Show the actual CSV file contents
         st.write("**Debug: Checking CSV file directly:**")
         try:
-            import pandas as pd
             csv_df = pd.read_csv("time_logs.csv")
             st.write(f"CSV file has {len(csv_df)} rows")
             st.write("CSV file sample:")
