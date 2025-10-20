@@ -220,10 +220,10 @@ class TimeTracker:
             # Write to file safely
             self._safe_file_operation(self.csv_file, 'append', log_entry)
         
+        
             
             # Update task total time
             self.update_task_total_time(task, duration)
-            print(f"Successfully logged {duration:.2f} minutes for task: {task}")
             
         except Exception as e:
             print(f"Error logging time for task {task}: {e}")
@@ -342,9 +342,9 @@ class TimeTracker:
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
         try:
-        logs_df = self.get_time_logs()
+            logs_df = self.get_time_logs()
         
-        if logs_df.empty:
+            if logs_df.empty:
                 return {
                     'total_time': 0,
                     'total_sessions': 0,
@@ -356,41 +356,41 @@ class TimeTracker:
                     'task_breakdown': {}
                 }
         
-        stats = {}
+            stats = {}
             
             # Convert duration to numeric, handle any non-numeric values
             logs_df['duration_minutes'] = pd.to_numeric(logs_df['duration_minutes'], errors='coerce').fillna(0)
         
         # Overall statistics
-        stats['total_time'] = logs_df['duration_minutes'].sum()
-        stats['total_sessions'] = len(logs_df)
-        stats['unique_tasks'] = logs_df['task'].nunique()
-        
+            # Overall statistics
+            stats["total_time"] = logs_df["duration_minutes"].sum()
+            stats["total_sessions"] = len(logs_df)
+            stats["unique_tasks"] = logs_df["task"].nunique()
         # Today's statistics
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        today_logs = logs_df[logs_df['date'] == today]
-        stats['today_time'] = today_logs['duration_minutes'].sum()
-        stats['today_sessions'] = len(today_logs)
-        
+            # Today's statistics
+            today = datetime.datetime.now().strftime('%Y-%m-%d')
+            today_logs = logs_df[logs_df['date'] == today]
+            stats['today_time'] = today_logs['duration_minutes'].sum()
+            stats['today_sessions'] = len(today_logs)
         # This week's statistics
-        week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
-        week_logs = logs_df[logs_df['date'] >= week_ago]
-        stats['week_time'] = week_logs['duration_minutes'].sum()
-        stats['week_sessions'] = len(week_logs)
-        
+            # This week's statistics
+            week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+            week_logs = logs_df[logs_df['date'] >= week_ago]
+            stats['week_time'] = week_logs['duration_minutes'].sum()
+            stats['week_sessions'] = len(week_logs)
         # Task-specific statistics
             if not logs_df.empty:
-        task_stats = logs_df.groupby('task').agg({
-            'duration_minutes': ['sum', 'count', 'mean'],
-            'date': 'nunique'
-        }).round(2)
-        
-        task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
-        stats['task_breakdown'] = task_stats.to_dict('index')
+                task_stats = logs_df.groupby('task').agg({
+                    'duration_minutes': ['sum', 'count', 'mean'],
+                    'date': 'nunique'
+                }).round(2)
+                
+                task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
+                stats['task_breakdown'] = task_stats.to_dict('index')
             else:
                 stats['task_breakdown'] = {}
         
-        return stats
+            return stats
             
         except Exception as e:
             print(f"Error calculating statistics: {e}")
@@ -520,7 +520,7 @@ def main():
     log_app_start()
     
     try:
-    st.set_page_config(
+        st.set_page_config(
             page_title=APP_NAME,
             page_icon="🕐",
         layout="wide",
@@ -1134,7 +1134,7 @@ def render_analytics_tab():
         with col1:
             st.metric("Total Time", f"{metrics.get('total_time_hours', 0):.1f} hrs")
             with col2:
-            st.metric("Sessions", f"{metrics.get('total_sessions', 0)}")
+                st.metric("Sessions", f"{metrics.get('total_sessions', 0)}")
         with col3:
             st.metric("Avg Session", f"{metrics.get('avg_session_length', 0):.1f} min")
         with col4:
@@ -1287,14 +1287,14 @@ def render_data_management_tab():
                 if st.button("Import Data"):
                     if data_manager.import_data(import_data):
                         st.success("Data imported successfully!")
-                    st.rerun()
+                        st.success("Data imported successfully!")
+                        st.rerun()
                     else:
                         st.error("Failed to import data")
             except Exception as e:
                 st.error(f"Import error: {e}")
-    
     # Backup section
-    st.markdown("## Backup Management")
+        st.markdown("## Backup Management")
     
     backup_col1, backup_col2 = st.columns(2)
     
@@ -1303,7 +1303,7 @@ def render_data_management_tab():
             backup_name = data_manager.create_backup()
             if backup_name:
                 st.success(f"Backup created: {backup_name}")
-                else:
+            else:
                 st.error("Failed to create backup")
     
     with backup_col2:
