@@ -265,7 +265,7 @@ class TimeTracker:
         except Exception as e:
             print(f"Error updating total time for task {task_name}: {e}")
     
-def update_all_task_totals(self):
+    def update_all_task_totals(self):
         """Recalculate all task totals based on current time logs"""
         try:
             # Get all time logs
@@ -448,9 +448,9 @@ def update_all_task_totals(self):
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
         try:
-        logs_df = self.get_time_logs()
+            logs_df = self.get_time_logs()
         
-        if logs_df.empty:
+            if logs_df.empty:
                 return {
                     'total_time': 0,
                     'total_sessions': 0,
