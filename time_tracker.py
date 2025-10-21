@@ -73,7 +73,7 @@ class TimeTracker:
     
     def cleanup_corrupted_data(self):
         """Clean up corrupted CSV data"""
-        try:
+                        try:
             # Fix time_logs.csv
             if os.path.exists(self.csv_file):
                 with open(self.csv_file, 'r') as f:
@@ -108,7 +108,7 @@ class TimeTracker:
                 
                 print(f"✅ Cleaned {self.csv_file} - removed corrupted entries")
                 
-        except Exception as e:
+                        except Exception as e:
             print(f"Error cleaning corrupted data: {e}")
     
     def _validate_log_entry(self, parts) -> bool:
@@ -130,7 +130,7 @@ class TimeTracker:
         if not all([task.strip(), start_time.strip(), end_time.strip(), duration.strip(), date.strip()]):
             return False
         
-        try:
+                        try:
             # Validate datetime formats
             datetime.datetime.strptime(start_time.strip(), '%Y-%m-%d %H:%M:%S')
             datetime.datetime.strptime(end_time.strip(), '%Y-%m-%d %H:%M:%S')
@@ -191,13 +191,13 @@ class TimeTracker:
             if df is not None:
                 return df.to_dict("records")
             return []
-        except Exception as e:
+                        except Exception as e:
             print(f"Error reading tasks: {e}")
             return []
     
     def log_time(self, task: str, start_time: datetime.datetime, end_time: datetime.datetime, session_type: str = "work"):
         """Log time entry to CSV with validation"""
-        try:
+                        try:
             # Validate inputs
             if not task or not task.strip():
                 raise ValueError("Task name cannot be empty")
@@ -205,7 +205,7 @@ class TimeTracker:
             if start_time >= end_time:
                 raise ValueError("Start time must be before end time")
             
-            duration = (end_time - start_time).total_seconds() / 60
+        duration = (end_time - start_time).total_seconds() / 60
             if duration <= 0:
                 raise ValueError("Duration must be positive")
             
@@ -227,9 +227,9 @@ class TimeTracker:
             self._safe_file_operation(self.csv_file, 'append', log_entry)
         
         # Update task total time
-            self.update_task_total_time(task, duration)
+        self.update_task_total_time(task, duration)
             
-        except Exception as e:
+                        except Exception as e:
             print(f"Error logging time for task {task}: {e}")
             raise
     
@@ -243,9 +243,9 @@ class TimeTracker:
             if len(df) < original_count:
                 self._safe_file_operation(self.tasks_file, 'write', df)
                 print(f"Successfully deleted task: {task_name}")
-            else:
+                    else:
                 print(f"Task not found: {task_name}")
-        except Exception as e:
+                        except Exception as e:
             print(f"Error deleting task {task_name}: {e}")
     
     def update_task_total_time(self, task_name: str, duration: float):
@@ -254,20 +254,20 @@ class TimeTracker:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
                 mask = df["task_name"] == task_name
-                if mask.any():
-                    # Convert to float to avoid dtype warnings
+            if mask.any():
+                # Convert to float to avoid dtype warnings
                     df["total_time_minutes"] = pd.to_numeric(df["total_time_minutes"], errors="coerce").fillna(0)
                     df.loc[mask, "total_time_minutes"] += duration
                     self._safe_file_operation(self.tasks_file, "write", df)
                     print(f"Updated total time for {task_name}: +{duration:.2f} minutes")
-                else:
+                    else:
                     print(f"Warning: Task '{task_name}' not found in tasks file")
-        except Exception as e:
+                        except Exception as e:
             print(f"Error updating total time for task {task_name}: {e}")
     
     def update_all_task_totals(self):
         """Recalculate all task totals based on current time logs"""
-        try:
+                        try:
             # Get all time logs
             logs_df = self.get_time_logs()
             if logs_df.empty:
@@ -292,7 +292,7 @@ class TimeTracker:
                 if mask.any():
                     # Update existing task
                     tasks_df.loc[mask, 'total_time_minutes'] = total_time
-                else:
+                    else:
                     # Add new task
                     new_task = pd.DataFrame({
                         'task_name': [task_name],
@@ -304,12 +304,12 @@ class TimeTracker:
             self._safe_file_operation(self.tasks_file, 'write', tasks_df)
             print("Updated all task totals based on current time logs")
             
-        except Exception as e:
+                        except Exception as e:
             print(f"Error updating all task totals: {e}")
     
     def get_time_logs(self, force_reload=False) -> pd.DataFrame:
         """Get all time logs with error handling and caching"""
-        try:
+                        try:
             # Force reload if requested or cache is None
             if force_reload or self._data_cache is None:
                 print(f"Loading fresh data from {self.csv_file}")
@@ -333,11 +333,11 @@ class TimeTracker:
                 self._data_cache = df  # Cache the data
                 print("Created empty dataframe and cached")
                 return df
-            else:
+                    else:
                 print(f"Using cached data: {len(self._data_cache)} rows")
                 return self._data_cache
                 
-        except Exception as e:
+                        except Exception as e:
             print(f"Error reading time logs: {e}")
             df = pd.DataFrame(columns=['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'])
             self._data_cache = df  # Cache the data
@@ -347,7 +347,7 @@ class TimeTracker:
     def add_schedule_block(self, date: str, start_time: str, end_time: str, task_name: str, 
                           block_type: str = "work", notes: str = ""):
         """Add a new schedule block"""
-        try:
+                        try:
             # Validate inputs
             if not all([date, start_time, end_time, task_name]):
                 raise ValueError("All fields are required")
@@ -373,27 +373,27 @@ class TimeTracker:
             
             self._safe_file_operation(self.schedule_file, 'append', block_data)
             print(f"Successfully added schedule block: {task_name} at {start_time}-{end_time}")
-        except Exception as e:
+                        except Exception as e:
             print(f"Error adding schedule block: {e}")
             raise
     
     def get_schedule_blocks(self, date: str = None) -> List[Dict]:
         """Get schedule blocks for a specific date or all dates"""
-        try:
+                        try:
             df = self._safe_file_operation(self.schedule_file, 'read')
             if df is not None and not df.empty:
                 if date:
                     df = df[df['date'] == date]
                 return df.to_dict("records")
             return []
-        except Exception as e:
+                        except Exception as e:
             print(f"Error reading schedule blocks: {e}")
             return []
     
     def update_schedule_block(self, date: str, start_time: str, task_name: str, 
                              completed: bool = None, notes: str = None):
         """Update a schedule block"""
-        try:
+                        try:
             df = self._safe_file_operation(self.schedule_file, 'read')
             if df is not None:
                 # Find the block to update
@@ -407,13 +407,13 @@ class TimeTracker:
                     self._safe_file_operation(self.schedule_file, 'write', df)
                     return True
             return False
-        except Exception as e:
+                        except Exception as e:
             print(f"Error updating schedule block: {e}")
             return False
     
     def delete_schedule_block(self, date: str, start_time: str, task_name: str):
         """Delete a schedule block"""
-        try:
+                        try:
             df = self._safe_file_operation(self.schedule_file, 'read')
             if df is not None:
                 original_count = len(df)
@@ -422,13 +422,13 @@ class TimeTracker:
                     self._safe_file_operation(self.schedule_file, 'write', df)
                     return True
             return False
-        except Exception as e:
+                        except Exception as e:
             print(f"Error deleting schedule block: {e}")
             return False
     
     def _has_time_conflict(self, date: str, start_time: str, end_time: str) -> bool:
         """Check if there's a time conflict with existing schedule blocks"""
-        try:
+                        try:
             blocks = self.get_schedule_blocks(date)
             start_dt = datetime.datetime.strptime(f"{date} {start_time}", '%Y-%m-%d %H:%M')
             end_dt = datetime.datetime.strptime(f"{date} {end_time}", '%Y-%m-%d %H:%M')
@@ -441,16 +441,16 @@ class TimeTracker:
                 if (start_dt < block_end and end_dt > block_start):
                     return True
             return False
-        except Exception as e:
+                        except Exception as e:
             print(f"Error checking time conflict: {e}")
             return False
     
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
-        try:
-            logs_df = self.get_time_logs()
+                        try:
+        logs_df = self.get_time_logs()
         
-            if logs_df.empty:
+        if logs_df.empty:
                 return {
                     'total_time': 0,
                     'total_sessions': 0,
@@ -462,43 +462,43 @@ class TimeTracker:
                     'task_breakdown': {}
                 }
         
-            stats = {}
+        stats = {}
             
             # Convert duration to numeric, handle any non-numeric values
             logs_df['duration_minutes'] = pd.to_numeric(logs_df['duration_minutes'], errors='coerce').fillna(0)
-            
-            # Overall statistics
+        
+        # Overall statistics
             stats["total_time"] = logs_df["duration_minutes"].sum()
             stats["total_sessions"] = len(logs_df)
             stats["unique_tasks"] = logs_df["task"].nunique()
-            
-            # Today's statistics
-            today = datetime.datetime.now().strftime('%Y-%m-%d')
-            today_logs = logs_df[logs_df['date'] == today]
-            stats['today_time'] = today_logs['duration_minutes'].sum()
-            stats['today_sessions'] = len(today_logs)
         
-            # This week's statistics
-            week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
-            week_logs = logs_df[logs_df['date'] >= week_ago]
-            stats['week_time'] = week_logs['duration_minutes'].sum()
-            stats['week_sessions'] = len(week_logs)
-            
+        # Today's statistics
+        today = datetime.datetime.now().strftime('%Y-%m-%d')
+        today_logs = logs_df[logs_df['date'] == today]
+        stats['today_time'] = today_logs['duration_minutes'].sum()
+        stats['today_sessions'] = len(today_logs)
+        
+        # This week's statistics
+        week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+        week_logs = logs_df[logs_df['date'] >= week_ago]
+        stats['week_time'] = week_logs['duration_minutes'].sum()
+        stats['week_sessions'] = len(week_logs)
+        
             # Task breakdown
             if not logs_df.empty:
-                task_stats = logs_df.groupby('task').agg({
-                    'duration_minutes': ['sum', 'count', 'mean'],
-                    'date': 'nunique'
-                }).round(2)
-                
-                task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
-                stats['task_breakdown'] = task_stats.to_dict('index')
-            else:
+        task_stats = logs_df.groupby('task').agg({
+            'duration_minutes': ['sum', 'count', 'mean'],
+            'date': 'nunique'
+        }).round(2)
+        
+        task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
+        stats['task_breakdown'] = task_stats.to_dict('index')
+                    else:
                 stats['task_breakdown'] = {}
+        
+        return stats
             
-            return stats
-            
-        except Exception as e:
+                        except Exception as e:
             print(f"Error calculating statistics: {e}")
             return {
                 'total_time': 0,
@@ -625,8 +625,8 @@ def main():
     logger = setup_logging()
     log_app_start()
     
-    try:
-        st.set_page_config(
+                        try:
+    st.set_page_config(
             page_title=APP_NAME,
             page_icon=None,
         layout="wide",
@@ -666,9 +666,9 @@ def main():
         # Main application UI
         render_main_ui()
         
-    except Exception as e:
+                        except Exception as e:
         log_error(f"Application error: {e}", e)
-        st.error(f"Application error: {e}")
+                            st.error(f"Application error: {e}")
     finally:
         log_app_stop()
 
@@ -843,9 +843,9 @@ def render_main_ui():
             st.markdown("### Active Tasks")
             for task in active_tasks:
                 col1, col2 = st.columns([3, 1])
-        with col1:
+                with col1:
                     st.write(f"• {task['task_name']}")
-        with col2:
+                with col2:
                     if st.button("Start", key=f"start_{task['task_name']}", width='stretch'):
                         st.session_state.current_task = task['task_name']
                         st.session_state.timer_start = datetime.datetime.now()
@@ -857,7 +857,7 @@ def render_main_ui():
                     if st.button("Delete", key=f"delete_{task['task_name']}", help="Delete task"):
                         st.session_state.tracker.delete_task(task['task_name'])
                         st.rerun()
-        with col4:
+                with col4:
                     st.write("")  # Empty space for alignment
         else:
             st.info("No active tasks. Add a task to start tracking!")
@@ -887,7 +887,7 @@ def render_main_ui():
                         st.session_state.is_tracking = False
                         st.session_state.current_task = None
                         st.session_state.timer_start = None
-                        st.success("Time logged successfully!")
+                            st.success("Time logged successfully!")
                         st.rerun()
                 
                 # Display elapsed time
@@ -956,10 +956,10 @@ def render_main_ui():
                 session_type_completed = "Break" if st.session_state.pomodoro.is_break else "Work"
                 
                 if session_type_completed == "Work":
-                    st.success(f"{session_type_completed} session complete! Sounds should be playing!")
+                            st.success(f"{session_type_completed} session complete! Sounds should be playing!")
                     st.balloons()  # Visual celebration
                 else:
-                    st.success(f"{session_type_completed} complete! Startup sound should be playing!")
+                            st.success(f"{session_type_completed} complete! Startup sound should be playing!")
                 
                 # Reset the completion flag
                 st.session_state.pomodoro.just_completed = False
@@ -977,16 +977,16 @@ def render_main_ui():
             # Clean metrics
             col1, col2, col3, col4 = st.columns(4)
             
-        with col1:
+            with col1:
                 st.metric("Total Time", f"{stats.get('total_time', 0):.1f} min")
             
-        with col2:
+            with col2:
                 st.metric("Today", f"{stats.get('today_time', 0):.1f} min")
             
-        with col3:
+            with col3:
                 st.metric("This Week", f"{stats.get('week_time', 0):.1f} min")
             
-        with col4:
+            with col4:
                 st.metric("Tasks", stats.get('unique_tasks', 0))
             
             # Task summary table
@@ -1030,11 +1030,11 @@ def render_main_ui():
 
 def validate_time_log_changes(original_df, edited_df):
     """Validate changes made to time logs"""
-    try:
+                        try:
         # Check if all required columns are present
         required_cols = ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type']
         if not all(col in edited_df.columns for col in required_cols):
-            st.error(f"Missing columns. Required: {required_cols}, Found: {list(edited_df.columns)}")
+                            st.error(f"Missing columns. Required: {required_cols}, Found: {list(edited_df.columns)}")
             return False
         
         # Validate each row (skip rows marked for deletion)
@@ -1050,17 +1050,17 @@ def validate_time_log_changes(original_df, edited_df):
                    (pd.isna(row['end_time']) or not row['end_time']):
                     st.warning(f"Row {idx}: Empty row detected - skipping validation")
                     continue
-                else:
-                    st.error(f"Row {idx}: Empty task name - please enter a task name or delete this row")
+                    else:
+                            st.error(f"Row {idx}: Empty task name - please enter a task name or delete this row")
                     return False
             
             # Check time format and logic
-            try:
+                        try:
                 start_time = pd.to_datetime(row['start_time'])
                 end_time = pd.to_datetime(row['end_time'])
                 
                 if start_time >= end_time:
-                    st.error(f"Row {idx}: Start time must be before end time")
+                            st.error(f"Row {idx}: Start time must be before end time")
                     return False
                 
                 # Check duration consistency - auto-correct if times were changed
@@ -1071,30 +1071,30 @@ def validate_time_log_changes(original_df, edited_df):
                     st.info(f"Row {idx}: Auto-corrected duration from {row['duration_minutes']:.2f} to {calculated_duration:.2f} minutes")
                 
             except (ValueError, TypeError) as e:
-                st.error(f"Row {idx}: Invalid time format - {e}")
+                            st.error(f"Row {idx}: Invalid time format - {e}")
                 return False
             
             # Check date format
-            try:
+                        try:
                 pd.to_datetime(row['date'])
             except (ValueError, TypeError) as e:
-                st.error(f"Row {idx}: Invalid date format - {e}")
+                            st.error(f"Row {idx}: Invalid date format - {e}")
                 return False
             
             # Check session type
             if row['session_type'] not in ['work', 'break', 'long_break']:
-                st.error(f"Row {idx}: Invalid session type: {row['session_type']}")
+                            st.error(f"Row {idx}: Invalid session type: {row['session_type']}")
                 return False
         
         return True
         
-    except Exception as e:
-        st.error(f"Validation error: {e}")
+                        except Exception as e:
+                            st.error(f"Validation error: {e}")
         return False
 
 def update_time_logs(edited_df, original_df):
     """Update the time logs CSV file with edited data"""
-    try:
+                        try:
         # Get the tracker instance
         tracker = st.session_state.tracker
         
@@ -1119,7 +1119,7 @@ def update_time_logs(edited_df, original_df):
                     complete_df = complete_df.drop(idx)
                     rows_deleted += 1
                     st.write(f"**Debug: Deleted row {idx}**")
-                else:
+                    else:
                     # Skip empty rows (rows with no task name and no times)
                     if (pd.isna(row['task']) or not row['task'] or not str(row['task']).strip()) and \
                        (pd.isna(row['start_time']) or not row['start_time']) and \
@@ -1173,8 +1173,8 @@ def update_time_logs(edited_df, original_df):
         st.session_state.tracker = TimeTracker()
         st.write("**Debug: Created fresh TimeTracker instance**")
         
-    except Exception as e:
-        st.error(f"Failed to update time logs: {e}")
+                        except Exception as e:
+                            st.error(f"Failed to update time logs: {e}")
         raise Exception(f"Failed to update time logs: {e}")
 
 def render_schedule_planner_tab():
@@ -1195,7 +1195,7 @@ def render_schedule_planner_tab():
         with st.form("add_schedule_block"):
             col1, col2 = st.columns(2)
             
-        with col1:
+            with col1:
                 start_time = st.time_input("Start Time", value=datetime.time(9, 0))
                 task_name = st.selectbox("Task", options=active_tasks + ["Break", "Meeting", "Other"])
                 if task_name == "Other":
@@ -1205,12 +1205,12 @@ def render_schedule_planner_tab():
                 end_time = st.time_input("End Time", value=datetime.time(10, 0))
                 block_type = st.selectbox("Block Type", ["work", "break", "meeting", "focus"])
             
-            notes = st.text_area("Notes (optional)", placeholder="Add any notes...")
+                    notes = st.text_area("Notes (optional)", placeholder="Add any notes...")
             
-            if st.form_submit_button("Add Block"):
-                if task_name and task_name.strip():
-                    try:
-                        st.session_state.tracker.add_schedule_block(
+                    if st.form_submit_button("Add Block"):
+                    if task_name and task_name.strip():
+                        try:
+                            st.session_state.tracker.add_schedule_block(
                             date_str,
                             start_time.strftime('%H:%M'),
                             end_time.strftime('%H:%M'),
@@ -1218,12 +1218,12 @@ def render_schedule_planner_tab():
                             block_type,
                             notes.strip()
                         )
-                        st.success(f"Added {task_name} from {start_time.strftime('%H:%M')} to {end_time.strftime('%H:%M')}")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error adding schedule block: {e}")
-                else:
-                    st.error("Please enter a task name")
+                            st.success(f"Added {task_name} from {start_time.strftime('%H:%M')} to {end_time.strftime('%H:%M')}")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error adding schedule block: {e}")
+                    else:
+                            st.error("Please enter a task name")
     
     # Display schedule for selected date
     st.markdown("### Today's Schedule")
@@ -1266,7 +1266,7 @@ def render_schedule_planner_tab():
                         </div>
                         """, unsafe_allow_html=True)
             
-        with col2:
+            with col2:
                     if not completed:
                         if st.button("Start Timer", key=f"start_timer_{i}"):
                             st.session_state.current_task = block['task_name']
@@ -1279,15 +1279,15 @@ def render_schedule_planner_tab():
                         st.session_state.tracker.update_schedule_block(
                             date_str, block['start_time'], block['task_name'], completed=True
                         )
-                        st.rerun()
+                            st.rerun()
                 
         with col4:
                     if st.button("Delete", key=f"delete_{i}"):
                         st.session_state.tracker.delete_schedule_block(
                             date_str, block['start_time'], block['task_name']
                         )
-                        st.rerun()
-    else:
+                            st.rerun()
+                    else:
         st.info("No schedule blocks for this date. Add some time blocks to plan your day!")
     
     # Quick stats
@@ -1322,7 +1322,7 @@ def render_analytics_tab():
         
         # Debug: Show the actual CSV file contents
         st.write("**Debug: Checking CSV file directly:**")
-        try:
+                        try:
             csv_df = pd.read_csv("time_logs.csv")
             st.write(f"CSV file has {len(csv_df)} rows")
             st.write("CSV file sample:")
@@ -1331,7 +1331,7 @@ def render_analytics_tab():
             # Compare loaded data with CSV data
             if len(logs_df) == len(csv_df):
                 st.write("✅ **Data consistency check: PASSED** - Loaded data matches CSV file")
-            else:
+                    else:
                 st.write(f"❌ **Data consistency check: FAILED** - Loaded: {len(logs_df)}, CSV: {len(csv_df)}")
                 
             # Check if specific rows match
@@ -1342,14 +1342,14 @@ def render_analytics_tab():
                 
                 if logs_sample.equals(csv_sample):
                     st.write("✅ **Row content check: PASSED** - Sample rows match exactly")
-                else:
+                    else:
                     st.write("❌ **Row content check: FAILED** - Sample rows differ")
                     st.write("Loaded data sample:")
                     st.dataframe(logs_sample, use_container_width=True)
                     st.write("CSV file sample:")
                     st.dataframe(csv_sample, use_container_width=True)
                     
-        except Exception as e:
+                        except Exception as e:
             st.write(f"Error reading CSV file: {e}")
     
     if logs_df.empty:
@@ -1400,7 +1400,7 @@ def render_analytics_tab():
         performance_df = analytics.get_task_performance_analysis()
         if not performance_df.empty:
             st.dataframe(performance_df, use_container_width=True)
-        else:
+                    else:
             st.info("No task performance data available")
     
     # Data editing section
@@ -1438,21 +1438,21 @@ def render_analytics_tab():
         with col1:
             st.caption("Hint: If you edit start_time or end_time, set both so duration updates correctly before saving.")
             if st.button("Save Changes", type="primary"):
-                try:
+                        try:
                     # Validate changes
                     if validate_time_log_changes(recent_logs, edited_df):
                         # Update the CSV file
                         update_time_logs(edited_df, logs_df)
-                        st.success("Time entries updated successfully!")
+                            st.success("Time entries updated successfully!")
                 st.rerun()
                     else:
-                        st.error("Invalid data detected. Please check your entries.")
-                except Exception as e:
-                    st.error(f"Error updating time entries: {e}")
+                            st.error("Invalid data detected. Please check your entries.")
+                        except Exception as e:
+                            st.error(f"Error updating time entries: {e}")
         
         with col2:
             if st.button("Reset Changes"):
-                st.rerun()
+                            st.rerun()
         
         with col3:
             st.markdown("**Instructions:**")
@@ -1460,7 +1460,7 @@ def render_analytics_tab():
             st.markdown("- Check 'Delete' to remove entries")
             st.markdown("- Click 'Save Changes' to apply")
     
-    else:
+                    else:
         st.info("No time entries available for editing.")
 
 def render_data_management_tab():
@@ -1502,34 +1502,34 @@ def render_data_management_tab():
                         f"time_tracker_export_{datetime.datetime.now().strftime('%Y%m%d')}.csv",
                         "text/csv"
                     )
-                else:
+                    else:
                     st.json(export_data)
-                st.success("Data exported successfully!")
-            else:
-                st.error("Failed to export data")
+                            st.success("Data exported successfully!")
+                    else:
+                            st.error("Failed to export data")
     
     with export_col2:
         st.markdown("### Import Data")
         uploaded_file = st.file_uploader("Choose a file", type=['csv', 'json'])
         
         if uploaded_file is not None:
-            try:
+                        try:
                 if uploaded_file.name.endswith('.csv'):
                     content = uploaded_file.read().decode('utf-8')
                     import_data = {'time_logs': content}
-                else:
+                    else:
                     import_data = json.load(uploaded_file)
                 
                 if st.button("Import Data"):
                     if data_manager.import_data(import_data):
-                        st.success("Data imported successfully!")
-                        st.success("Data imported successfully!")
-                        st.success("Data imported successfully!")
+                            st.success("Data imported successfully!")
+                            st.success("Data imported successfully!")
+                            st.success("Data imported successfully!")
                     st.rerun()
                     else:
-                        st.error("Failed to import data")
-            except Exception as e:
-                st.error(f"Import error: {e}")
+                            st.error("Failed to import data")
+                        except Exception as e:
+                            st.error(f"Import error: {e}")
         st.markdown("## Backup Management")
     
     backup_col1, backup_col2 = st.columns(2)
@@ -1538,14 +1538,14 @@ def render_data_management_tab():
         if st.button("Create Backup", type="secondary"):
             backup_name = data_manager.create_backup()
             if backup_name:
-                st.success(f"Backup created: {backup_name}")
+                            st.success(f"Backup created: {backup_name}")
                 else:
-                st.error("Failed to create backup")
+                            st.error("Failed to create backup")
     
     with backup_col2:
         if st.button("Clean Old Backups"):
             deleted_count = data_manager.cleanup_old_backups()
-            st.success(f"Cleaned up {deleted_count} old backup files")
+                            st.success(f"Cleaned up {deleted_count} old backup files")
     
     # Data validation
     st.markdown("## Data Validation")
@@ -1557,7 +1557,7 @@ def render_data_management_tab():
                 if problems:
                     st.warning(f"{category.title()}: {', '.join(problems)}")
         else:
-            st.success("Data integrity check passed!")
+                            st.success("Data integrity check passed!")
 
 def render_settings_tab():
     """Render the Settings tab"""
@@ -1586,7 +1586,7 @@ def render_settings_tab():
                 value=settings_manager.get_setting('pomodoro', 'break_duration', DEFAULT_BREAK_DURATION)
             )
     
-        with col2:
+    with col2:
             long_break_duration = st.number_input(
                 "Long Break Duration (minutes)",
                 min_value=MIN_DURATION,
@@ -1611,7 +1611,7 @@ def render_settings_tab():
                 value=settings_manager.get_setting('pomodoro', 'sound_enabled', True)
             )
             
-            if st.form_submit_button("Save Pomodoro Settings", type="primary"):
+                    if st.form_submit_button("Save Pomodoro Settings", type="primary"):
                 pomodoro_settings = {
                     'work_duration': work_duration,
                     'break_duration': break_duration,
@@ -1623,10 +1623,10 @@ def render_settings_tab():
                 
                 if settings_manager.set_pomodoro_settings(pomodoro_settings):
                     settings_manager.save_settings()
-                    st.success("Pomodoro settings saved!")
+                            st.success("Pomodoro settings saved!")
                     st.rerun()
             else:
-                    st.error("Failed to save settings")
+                            st.error("Failed to save settings")
     
     # UI settings
     st.markdown("## Interface")
@@ -1636,7 +1636,7 @@ def render_settings_tab():
         auto_refresh = st.number_input("Auto-refresh interval (seconds)", min_value=1.0, max_value=60.0, value=3.0)
         show_notifications = st.checkbox("Show notifications", value=True)
         
-        if st.form_submit_button("Save UI Settings"):
+                    if st.form_submit_button("Save UI Settings"):
             ui_settings = {
                 'theme': theme,
                 'auto_refresh_interval': auto_refresh,
@@ -1645,9 +1645,9 @@ def render_settings_tab():
             
             if settings_manager.set_ui_settings(ui_settings):
                 settings_manager.save_settings()
-                st.success("UI settings saved!")
+                            st.success("UI settings saved!")
             else:
-                st.error("Failed to save settings")
+                            st.error("Failed to save settings")
     
     # Data settings
     st.markdown("## Data Management")
@@ -1657,7 +1657,7 @@ def render_settings_tab():
         backup_frequency = st.number_input("Backup frequency (days)", min_value=1.0, max_value=30.0, value=7.0)
         max_backups = st.number_input("Maximum backup files", min_value=1.0, max_value=50.0, value=10.0)
         
-        if st.form_submit_button("Save Data Settings"):
+                    if st.form_submit_button("Save Data Settings"):
             data_settings = {
                 'auto_backup_enabled': auto_backup,
                 'backup_frequency_days': backup_frequency,
@@ -1669,9 +1669,9 @@ def render_settings_tab():
             settings_manager.set_setting('data', 'max_backup_files', max_backups)
             
             if settings_manager.save_settings():
-                st.success("Data settings saved!")
-            else:
-                st.error("Failed to save settings")
+                            st.success("Data settings saved!")
+                    else:
+                            st.error("Failed to save settings")
     
     # Reset settings
     st.markdown("## Reset")
@@ -1679,10 +1679,10 @@ def render_settings_tab():
     if st.button("Reset to Defaults", type="secondary"):
         if settings_manager.reset_to_defaults():
             settings_manager.save_settings()
-            st.success("Settings reset to defaults!")
-            st.rerun()
-        else:
-            st.error("Failed to reset settings")
+                            st.success("Settings reset to defaults!")
+                            st.rerun()
+                    else:
+                            st.error("Failed to reset settings")
 
 def render_about_tab():
     """Render the About tab"""
