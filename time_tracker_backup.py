@@ -254,16 +254,16 @@ class TimeTracker:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
                 mask = df["task_name"] == task_name
-            if mask.any():
-                # Convert to float to avoid dtype warnings
+                if mask.any():
+                    # Convert to float to avoid dtype warnings
                     df["total_time_minutes"] = pd.to_numeric(df["total_time_minutes"], errors="coerce").fillna(0)
                     df.loc[mask, "total_time_minutes"] += duration
                     self._safe_file_operation(self.tasks_file, "write", df)
                     print(f"Updated total time for {task_name}: +{duration:.2f} minutes")
                 else:
-                print(f"Warning: Task '{task_name}' not found in tasks file")
+                    print(f"Warning: Task '{task_name}' not found in tasks file")
         except Exception as e:
-        print(f"Error updating total time for task {task_name}: {e}")
+            print(f"Error updating total time for task {task_name}: {e}")
     
     def update_all_task_totals(self):
         """Recalculate all task totals based on current time logs"""
@@ -448,9 +448,9 @@ class TimeTracker:
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
         try:
-        logs_df = self.get_time_logs()
+            logs_df = self.get_time_logs()
         
-        if logs_df.empty:
+            if logs_df.empty:
                 return {
                     'total_time': 0,
                     'total_sessions': 0,
@@ -462,8 +462,8 @@ class TimeTracker:
                     'task_breakdown': {}
                 }
         
-        stats = {}
-        
+            stats = {}
+            
             # Convert duration to numeric, handle any non-numeric values
             logs_df['duration_minutes'] = pd.to_numeric(logs_df['duration_minutes'], errors='coerce').fillna(0)
         
@@ -472,31 +472,34 @@ class TimeTracker:
             stats["total_time"] = logs_df["duration_minutes"].sum()
             stats["total_sessions"] = len(logs_df)
             stats["unique_tasks"] = logs_df["task"].nunique()
-        # Today's statistics
-        # Today's statistics
-        # Today's statistics
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        today_logs = logs_df[logs_df['date'] == today]
-        stats['today_time'] = today_logs['duration_minutes'].sum()
-        stats['today_sessions'] = len(today_logs)
-        # This week's statistics
-        # This week's statistics
-        week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
-        week_logs = logs_df[logs_df['date'] >= week_ago]
-        stats['week_time'] = week_logs['duration_minutes'].sum()
-        stats['week_sessions'] = len(week_logs)
-            if not logs_df.empty:
-        task_stats = logs_df.groupby('task').agg({
-            'duration_minutes': ['sum', 'count', 'mean'],
-            'date': 'nunique'
-        }).round(2)
         
-        task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
-        stats['task_breakdown'] = task_stats.to_dict('index')
+        # Today's statistics
+            # Today's statistics
+            today = datetime.datetime.now().strftime('%Y-%m-%d')
+            today_logs = logs_df[logs_df['date'] == today]
+            stats['today_time'] = today_logs['duration_minutes'].sum()
+            stats['today_sessions'] = len(today_logs)
+        
+        # This week's statistics
+            # This week's statistics
+            week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+            week_logs = logs_df[logs_df['date'] >= week_ago]
+            stats['week_time'] = week_logs['duration_minutes'].sum()
+            stats['week_sessions'] = len(week_logs)
+        
+        # Task-specific statistics
+            if not logs_df.empty:
+                task_stats = logs_df.groupby('task').agg({
+                    'duration_minutes': ['sum', 'count', 'mean'],
+                    'date': 'nunique'
+                }).round(2)
+                
+                task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
+                stats['task_breakdown'] = task_stats.to_dict('index')
             else:
                 stats['task_breakdown'] = {}
         
-        return stats
+            return stats
             
         except Exception as e:
             print(f"Error calculating statistics: {e}")
@@ -626,12 +629,12 @@ def main():
     log_app_start()
     
     try:
-    st.set_page_config(
+        st.set_page_config(
             page_title=APP_NAME,
             page_icon=None,
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
+            layout="wide",
+            initial_sidebar_state="expanded"
+        )
         
         # Initialize managers
         data_manager = DataManager()
@@ -1267,26 +1270,26 @@ def render_schedule_planner_tab():
                         """, unsafe_allow_html=True)
             
             with col2:
-                    if not completed:
-                        if st.button("Start Timer", key=f"start_timer_{i}"):
-                            st.session_state.current_task = block['task_name']
-                            st.session_state.timer_start = datetime.datetime.now()
-                            st.session_state.is_tracking = True
-                            st.rerun()
-                
-                with col3:
-                    if st.button("Complete", key=f"complete_{i}"):
-                        st.session_state.tracker.update_schedule_block(
-                            date_str, block['start_time'], block['task_name'], completed=True
-                        )
+                if not completed:
+                    if st.button("Start Timer", key=f"start_timer_{i}"):
+                        st.session_state.current_task = block['task_name']
+                        st.session_state.timer_start = datetime.datetime.now()
+                        st.session_state.is_tracking = True
                         st.rerun()
-                
-                with col4:
-                    if st.button("Delete", key=f"delete_{i}"):
-                        st.session_state.tracker.delete_schedule_block(
-                            date_str, block['start_time'], block['task_name']
-                        )
-                        st.rerun()
+            
+            with col3:
+                if st.button("Complete", key=f"complete_{i}"):
+                    st.session_state.tracker.update_schedule_block(
+                        date_str, block['start_time'], block['task_name'], completed=True
+                    )
+                    st.rerun()
+            
+            with col4:
+                if st.button("Delete", key=f"delete_{i}"):
+                    st.session_state.tracker.delete_schedule_block(
+                        date_str, block['start_time'], block['task_name']
+                    )
+                    st.rerun()
     else:
         st.info("No schedule blocks for this date. Add some time blocks to plan your day!")
     
@@ -1444,7 +1447,7 @@ def render_analytics_tab():
                         # Update the CSV file
                         update_time_logs(edited_df, logs_df)
                         st.success("Time entries updated successfully!")
-                st.rerun()
+                        st.rerun()
                     else:
                         st.error("Invalid data detected. Please check your entries.")
                 except Exception as e:
@@ -1524,8 +1527,7 @@ def render_data_management_tab():
                     if data_manager.import_data(import_data):
                         st.success("Data imported successfully!")
                         st.success("Data imported successfully!")
-                        st.success("Data imported successfully!")
-                    st.rerun()
+                        st.rerun()
                     else:
                         st.error("Failed to import data")
             except Exception as e:
@@ -1539,7 +1541,7 @@ def render_data_management_tab():
             backup_name = data_manager.create_backup()
             if backup_name:
                 st.success(f"Backup created: {backup_name}")
-                else:
+            else:
                 st.error("Failed to create backup")
     
     with backup_col2:
