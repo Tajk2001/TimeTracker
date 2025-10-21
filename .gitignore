@@ -4,6 +4,7 @@
 time_logs.csv
 tasks.csv
 settings.json
+schedule_blocks.csv
 # Allow sample files
 !sample_*.csv
 
