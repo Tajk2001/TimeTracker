@@ -462,41 +462,41 @@ class TimeTracker:
                     'task_breakdown': {}
                 }
         
-        stats = {}
+            stats = {}
             
             # Convert duration to numeric, handle any non-numeric values
             logs_df['duration_minutes'] = pd.to_numeric(logs_df['duration_minutes'], errors='coerce').fillna(0)
-        
-        # Overall statistics
+            
+            # Overall statistics
             stats["total_time"] = logs_df["duration_minutes"].sum()
             stats["total_sessions"] = len(logs_df)
             stats["unique_tasks"] = logs_df["task"].nunique()
+            
+            # Today's statistics
+            today = datetime.datetime.now().strftime('%Y-%m-%d')
+            today_logs = logs_df[logs_df['date'] == today]
+            stats['today_time'] = today_logs['duration_minutes'].sum()
+            stats['today_sessions'] = len(today_logs)
         
-        # Today's statistics
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        today_logs = logs_df[logs_df['date'] == today]
-        stats['today_time'] = today_logs['duration_minutes'].sum()
-        stats['today_sessions'] = len(today_logs)
-        
-        # This week's statistics
-        week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
-        week_logs = logs_df[logs_df['date'] >= week_ago]
-        stats['week_time'] = week_logs['duration_minutes'].sum()
-        stats['week_sessions'] = len(week_logs)
-        
+            # This week's statistics
+            week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+            week_logs = logs_df[logs_df['date'] >= week_ago]
+            stats['week_time'] = week_logs['duration_minutes'].sum()
+            stats['week_sessions'] = len(week_logs)
+            
             # Task breakdown
             if not logs_df.empty:
-        task_stats = logs_df.groupby('task').agg({
-            'duration_minutes': ['sum', 'count', 'mean'],
-            'date': 'nunique'
-        }).round(2)
-        
-        task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
-        stats['task_breakdown'] = task_stats.to_dict('index')
+                task_stats = logs_df.groupby('task').agg({
+                    'duration_minutes': ['sum', 'count', 'mean'],
+                    'date': 'nunique'
+                }).round(2)
+                
+                task_stats.columns = ['total_time', 'sessions', 'avg_session', 'days_worked']
+                stats['task_breakdown'] = task_stats.to_dict('index')
             else:
                 stats['task_breakdown'] = {}
-        
-        return stats
+            
+            return stats
             
         except Exception as e:
             print(f"Error calculating statistics: {e}")
@@ -626,7 +626,7 @@ def main():
     log_app_start()
     
     try:
-    st.set_page_config(
+        st.set_page_config(
             page_title=APP_NAME,
             page_icon=None,
         layout="wide",
@@ -843,9 +843,9 @@ def render_main_ui():
             st.markdown("### Active Tasks")
             for task in active_tasks:
                 col1, col2 = st.columns([3, 1])
-                with col1:
+        with col1:
                     st.write(f"• {task['task_name']}")
-                with col2:
+        with col2:
                     if st.button("Start", key=f"start_{task['task_name']}", width='stretch'):
                         st.session_state.current_task = task['task_name']
                         st.session_state.timer_start = datetime.datetime.now()
@@ -857,7 +857,7 @@ def render_main_ui():
                     if st.button("Delete", key=f"delete_{task['task_name']}", help="Delete task"):
                         st.session_state.tracker.delete_task(task['task_name'])
                         st.rerun()
-                with col4:
+        with col4:
                     st.write("")  # Empty space for alignment
         else:
             st.info("No active tasks. Add a task to start tracking!")
@@ -977,16 +977,16 @@ def render_main_ui():
             # Clean metrics
             col1, col2, col3, col4 = st.columns(4)
             
-            with col1:
+        with col1:
                 st.metric("Total Time", f"{stats.get('total_time', 0):.1f} min")
             
-            with col2:
+        with col2:
                 st.metric("Today", f"{stats.get('today_time', 0):.1f} min")
             
-            with col3:
+        with col3:
                 st.metric("This Week", f"{stats.get('week_time', 0):.1f} min")
             
-            with col4:
+        with col4:
                 st.metric("Tasks", stats.get('unique_tasks', 0))
             
             # Task summary table
@@ -1195,13 +1195,13 @@ def render_schedule_planner_tab():
         with st.form("add_schedule_block"):
             col1, col2 = st.columns(2)
             
-            with col1:
+        with col1:
                 start_time = st.time_input("Start Time", value=datetime.time(9, 0))
                 task_name = st.selectbox("Task", options=active_tasks + ["Break", "Meeting", "Other"])
                 if task_name == "Other":
                     task_name = st.text_input("Custom Task Name", placeholder="Enter task name...")
             
-            with col2:
+        with col2:
                 end_time = st.time_input("End Time", value=datetime.time(10, 0))
                 block_type = st.selectbox("Block Type", ["work", "break", "meeting", "focus"])
             
@@ -1238,7 +1238,7 @@ def render_schedule_planner_tab():
             with st.container():
                 col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
                 
-                with col1:
+        with col1:
                     # Visual block representation
                     block_type_color = {
                         'work': '#00ff88',
@@ -1266,7 +1266,7 @@ def render_schedule_planner_tab():
                         </div>
                         """, unsafe_allow_html=True)
             
-            with col2:
+        with col2:
                     if not completed:
                         if st.button("Start Timer", key=f"start_timer_{i}"):
                             st.session_state.current_task = block['task_name']
@@ -1274,14 +1274,14 @@ def render_schedule_planner_tab():
                             st.session_state.is_tracking = True
                             st.rerun()
                 
-                with col3:
+        with col3:
                     if st.button("Complete", key=f"complete_{i}"):
                         st.session_state.tracker.update_schedule_block(
                             date_str, block['start_time'], block['task_name'], completed=True
                         )
                         st.rerun()
                 
-                with col4:
+        with col4:
                     if st.button("Delete", key=f"delete_{i}"):
                         st.session_state.tracker.delete_schedule_block(
                             date_str, block['start_time'], block['task_name']
@@ -1368,7 +1368,7 @@ def render_analytics_tab():
         
         with col1:
             st.metric("Total Time", f"{metrics.get('total_time_hours', 0):.1f} hrs")
-            with col2:
+        with col2:
                 st.metric("Sessions", f"{metrics.get('total_sessions', 0)}")
         with col3:
             st.metric("Avg Session", f"{metrics.get('avg_session_length', 0):.1f} min")
@@ -1586,7 +1586,7 @@ def render_settings_tab():
                 value=settings_manager.get_setting('pomodoro', 'break_duration', DEFAULT_BREAK_DURATION)
             )
     
-    with col2:
+        with col2:
             long_break_duration = st.number_input(
                 "Long Break Duration (minutes)",
                 min_value=MIN_DURATION,
