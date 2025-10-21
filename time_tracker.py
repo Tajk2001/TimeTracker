@@ -226,8 +226,6 @@ class TimeTracker:
             # Write to file safely
             self._safe_file_operation(self.csv_file, 'append', log_entry)
         
-        
-        
         # Update task total time
             self.update_task_total_time(task, duration)
             
@@ -257,7 +255,7 @@ class TimeTracker:
             if df is not None:
                 mask = df["task_name"] == task_name
                 if mask.any():
-                # Convert to float to avoid dtype warnings
+                    # Convert to float to avoid dtype warnings
                     df["total_time_minutes"] = pd.to_numeric(df["total_time_minutes"], errors="coerce").fillna(0)
                     df.loc[mask, "total_time_minutes"] += duration
                     self._safe_file_operation(self.tasks_file, "write", df)
@@ -267,7 +265,7 @@ class TimeTracker:
         except Exception as e:
             print(f"Error updating total time for task {task_name}: {e}")
     
-    def update_all_task_totals(self):
+def update_all_task_totals(self):
         """Recalculate all task totals based on current time logs"""
         try:
             # Get all time logs
@@ -450,9 +448,9 @@ class TimeTracker:
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
         try:
-            logs_df = self.get_time_logs()
+        logs_df = self.get_time_logs()
         
-            if logs_df.empty:
+        if logs_df.empty:
                 return {
                     'total_time': 0,
                     'total_sessions': 0,
@@ -465,28 +463,28 @@ class TimeTracker:
                 }
         
         stats = {}
-        
+            
             # Convert duration to numeric, handle any non-numeric values
             logs_df['duration_minutes'] = pd.to_numeric(logs_df['duration_minutes'], errors='coerce').fillna(0)
         
         # Overall statistics
-            # Overall statistics
             stats["total_time"] = logs_df["duration_minutes"].sum()
             stats["total_sessions"] = len(logs_df)
             stats["unique_tasks"] = logs_df["task"].nunique()
-        # Today's statistics
-        # Today's statistics
+        
         # Today's statistics
         today = datetime.datetime.now().strftime('%Y-%m-%d')
         today_logs = logs_df[logs_df['date'] == today]
         stats['today_time'] = today_logs['duration_minutes'].sum()
         stats['today_sessions'] = len(today_logs)
-        # This week's statistics
+        
         # This week's statistics
         week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
         week_logs = logs_df[logs_df['date'] >= week_ago]
         stats['week_time'] = week_logs['duration_minutes'].sum()
         stats['week_sessions'] = len(week_logs)
+        
+            # Task breakdown
             if not logs_df.empty:
         task_stats = logs_df.groupby('task').agg({
             'duration_minutes': ['sum', 'count', 'mean'],
