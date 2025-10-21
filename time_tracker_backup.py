@@ -226,8 +226,6 @@ class TimeTracker:
             # Write to file safely
             self._safe_file_operation(self.csv_file, 'append', log_entry)
         
-        
-        
         # Update task total time
             self.update_task_total_time(task, duration)
             
@@ -256,16 +254,16 @@ class TimeTracker:
             df = self._safe_file_operation(self.tasks_file, 'read')
             if df is not None:
                 mask = df["task_name"] == task_name
-                if mask.any():
+            if mask.any():
                 # Convert to float to avoid dtype warnings
                     df["total_time_minutes"] = pd.to_numeric(df["total_time_minutes"], errors="coerce").fillna(0)
                     df.loc[mask, "total_time_minutes"] += duration
                     self._safe_file_operation(self.tasks_file, "write", df)
                     print(f"Updated total time for {task_name}: +{duration:.2f} minutes")
                 else:
-                    print(f"Warning: Task '{task_name}' not found in tasks file")
+                print(f"Warning: Task '{task_name}' not found in tasks file")
         except Exception as e:
-            print(f"Error updating total time for task {task_name}: {e}")
+        print(f"Error updating total time for task {task_name}: {e}")
     
     def update_all_task_totals(self):
         """Recalculate all task totals based on current time logs"""
@@ -450,9 +448,9 @@ class TimeTracker:
     def get_task_statistics(self) -> Dict:
         """Get comprehensive task statistics with error handling"""
         try:
-            logs_df = self.get_time_logs()
+        logs_df = self.get_time_logs()
         
-            if logs_df.empty:
+        if logs_df.empty:
                 return {
                     'total_time': 0,
                     'total_sessions': 0,
