@@ -1,12 +1,12 @@
 # Time Tracker Pro
 
-A comprehensive, modern time tracking application with Pomodoro timer, advanced analytics, and data management features.
+A modern time tracking application with a Pomodoro timer, analytics, and local data management.
 
 ## Quick Start
 
 ### Option 1: Automated Setup (Recommended)
 ```bash
-python scripts/setup.py
+python setup.py
 python launch.py
 ```
 
@@ -34,27 +34,21 @@ streamlit run time_tracker.py
 ## Project Structure
 
 ```
-TimeTrackerPro/
-├── src/                    # Core application modules
-│   ├── config.py          # Configuration settings
-│   ├── logger.py          # Logging system
-│   ├── data_manager.py    # Data management utilities
-│   ├── analytics.py       # Advanced analytics engine
-│   └── settings_manager.py # Settings management
-├── scripts/               # Build and setup scripts
-│   ├── setup.py          # Installation script
-│   ├── build_exe.py      # Executable builder
-│   └── build_exe.bat      # Windows batch file
-├── docs/                  # Documentation
-│   └── README.md         # Development docs
-├── time_tracker.py        # Main application
+.
+├── analytics.py           # Analytics engine
+├── build_exe.py          # Executable builder (optional)
+├── config.py             # Configuration settings
+├── data_manager.py       # Data management utilities
+├── docs/                 # Documentation
 ├── launch.py             # Application launcher
+├── logger.py             # Logging setup and helpers
 ├── requirements.txt      # Python dependencies
-├── time_tracker.spec     # PyInstaller spec
-├── sample_time_logs.csv  # Sample data
-├── sample_tasks.csv      # Sample tasks
-├── .gitignore           # Git ignore rules
-└── README.md            # This file
+├── scripts/              # Additional scripts (optional)
+├── settings_manager.py   # Settings management
+├── Start Time Tracker.command # macOS launcher (optional)
+├── Start Time Tracker.py # Convenience launcher
+├── time_tracker.py       # Main Streamlit app
+└── README.md             # This file
 ```
 
 ## Features
@@ -71,11 +65,10 @@ TimeTrackerPro/
 - **Sound notifications** - Audio alerts for completions
 - **Visual celebrations** - Balloons and success messages
 
-### Advanced Analytics
-- **Productivity metrics** - Total time, sessions, consistency scores
-- **Interactive charts** - Time trends, task distribution, heatmaps
-- **Performance analysis** - Task efficiency and session patterns
-- **Weekly summaries** - Comprehensive time breakdowns
+### Analytics
+- Task and session summaries
+- Time trends and task distribution
+- Weekly breakdowns
 
 ### Data Management
 - **Export/Import** - CSV, JSON, Excel formats
@@ -90,17 +83,15 @@ TimeTrackerPro/
 - **Validation** - Settings validation and error handling
 
 ### User Interface
-- **Dark theme** - Modern, minimalist design
-- **Responsive layout** - Works on different screen sizes
-- **Intuitive navigation** - Tab-based interface
-- **Real-time updates** - Live timer and data refresh
+- Dark theme and responsive layout
+- Tab-based navigation
+- Live timer and data refresh
 
-## Sound Features
+## Sound Notifications
 
-- **Work Complete**: 3 beeps + celebration sound
-- **Break Complete**: Startup sound
-- **Background Detection**: Sounds work even when app is not in focus
-- **Customizable**: Enable/disable in settings
+- Work complete: chime sequence
+- Break complete: startup sound
+- Configurable in Settings
 
 ## Data Storage
 
@@ -114,12 +105,10 @@ Your time tracking data is automatically saved locally:
 
 ## Technical Details
 
-- **Python**: 3.8+ required
-- **Framework**: Streamlit 1.28+
-- **Dependencies**: pandas, plotly, numpy
-- **Platform**: Cross-platform (Windows, macOS, Linux)
-- **Storage**: Local CSV files (no cloud dependency)
-- **Security**: All data stays on your device
+- Python 3.8+
+- Streamlit 1.28+
+- Dependencies: pandas, plotly, numpy
+- Local CSV storage (no cloud dependency)
 
 ## Troubleshooting
 
@@ -159,14 +148,11 @@ Your time tracking data is automatically saved locally:
 3. **Backup management** - Clean up old backups periodically
 4. **Data validation** - Run integrity checks regularly
 
-## Creating Executable (.exe) Files
+## Building an Executable (Windows)
 
 ### Quick Build (Windows)
 ```bash
-# Double-click the batch file
-scripts/build_exe.bat
-
-# Or run manually
+# Run builder script
 python scripts/build_exe.py
 ```
 
@@ -185,16 +171,12 @@ pyinstaller --clean --noconfirm time_tracker.spec
 - **No Python installation required** for end users!
 
 ### Distribution
-1. Share the entire `TimeTrackerPro_Portable` folder
-2. Recipients just run `TimeTrackerPro.exe`
-3. All data stored locally in the `data` folder
+Share the `TimeTrackerPro_Portable` folder; recipients run `TimeTrackerPro.exe`.
 
 ## Updates & Maintenance
 
 ### Updating the Application
-1. Download the latest version
-2. Run `setup.py` to update dependencies
-3. Your data will be preserved
+Run `setup.py` to update dependencies. Your data is preserved.
 
 ### Data Maintenance
 - **Automatic**: Logs rotate daily, backups created weekly

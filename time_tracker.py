@@ -530,32 +530,23 @@ def play_sound(sound_type):
         elif sound_type == "startup":
             # Play startup sound
             os.system('afplay /System/Library/Sounds/Ping.aiff')
-        print(f"Sound {sound_type} played successfully")
-    except Exception as e:
-        print(f"Error playing sound {sound_type}: {e}")
+    except Exception:
+        # Silently ignore sound errors to avoid console noise in production
+        pass
 
 def check_timer_completion():
     """Check if any timer has completed and play sound notification"""
-    print("Checking timer completion...")  # Debug output
-    
     # Check Pomodoro timer completion
     if st.session_state.pomodoro.is_running:
         st.session_state.pomodoro.update_timer()
-        print(f"Timer running, remaining: {st.session_state.pomodoro.remaining_time:.1f}s")  # Debug output
-        
         if st.session_state.pomodoro.remaining_time <= 0 and not st.session_state.pomodoro.just_completed:
-            print("Timer completed! Playing sounds...")  # Debug output
             st.session_state.pomodoro.complete_session()
             # Play sound notification
             if st.session_state.pomodoro.is_break:
-                print("Playing startup sound (break complete)")  # Debug output
                 play_sound("startup")  # Break complete - time to work
             else:
-                print("Playing completion sounds (work complete)")  # Debug output
                 play_sound("completion")  # Work complete
                 play_sound("celebration")  # Celebration
-    else:
-        print("Timer not running")  # Debug output
 
 class PomodoroTimer:
     def __init__(self):
@@ -1104,9 +1095,7 @@ def update_time_logs(edited_df, original_df):
         # Get the complete dataset (not just the recent 50)
         complete_df = tracker.get_time_logs()
         
-        # Debug: Show what we're working with
-        st.write(f"**Debug: Complete dataset has {len(complete_df)} rows**")
-        st.write(f"**Debug: Edited dataset has {len(edited_df)} rows**")
+        # Process edited rows against the complete dataset
         
         # Process each edited row
         rows_updated = 0
@@ -1121,7 +1110,7 @@ def update_time_logs(edited_df, original_df):
                     # Remove this row
                     complete_df = complete_df.drop(idx)
                     rows_deleted += 1
-                    st.write(f"**Debug: Deleted row {idx}**")
+                    # Row marked for deletion; drop from dataset
                 else:
                     # Skip empty rows (rows with no task name and no times)
                     if (pd.isna(row['task']) or not row['task'] or not str(row['task']).strip()) and \
@@ -1130,14 +1119,13 @@ def update_time_logs(edited_df, original_df):
                         # Remove empty rows
                         complete_df = complete_df.drop(idx)
                         rows_deleted += 1
-                        st.write(f"**Debug: Removed empty row {idx}**")
+                        # Removed empty row
                         continue
                     
                     # Update the row with edited data (excluding delete column)
                     update_data = row.drop('delete') if 'delete' in edited_df.columns else row
                     complete_df.loc[idx] = update_data
                     rows_updated += 1
-                    st.write(f"**Debug: Updated row {idx}**")
         
         # Recalculate duration for consistency
         complete_df['duration_minutes'] = (
@@ -1148,15 +1136,13 @@ def update_time_logs(edited_df, original_df):
         # Round duration to 2 decimal places
         complete_df['duration_minutes'] = complete_df['duration_minutes'].round(2)
         
-        # Debug: Show final dataset
-        st.write(f"**Debug: Final dataset has {len(complete_df)} rows**")
-        st.write(f"**Debug: Updated {rows_updated} rows, deleted {rows_deleted} rows**")
+        # Optionally, you could surface a concise summary if desired
         
         # Save to CSV using the tracker's safe file operation
         tracker._safe_file_operation(tracker.csv_file, 'write', complete_df)
         
-        # Debug: Verify the file was written
-        st.info(f"✅ Data saved to {tracker.csv_file} - {len(complete_df)} rows")
+        # Inform user of save result
+        st.info(f"Saved {len(complete_df)} rows to {tracker.csv_file}")
         
         # Small delay to ensure file write is complete
         import time
@@ -1168,13 +1154,8 @@ def update_time_logs(edited_df, original_df):
         # Force refresh the session state data
         st.session_state.tracker._data_cache = None
         
-        # Additional verification: Read back the file to confirm
-        verification_df = pd.read_csv(tracker.csv_file)
-        st.write(f"**Debug: Verification - CSV file now has {len(verification_df)} rows**")
-        
         # Force a complete refresh of the tracker instance
         st.session_state.tracker = TimeTracker()
-        st.write("**Debug: Created fresh TimeTracker instance**")
         
     except Exception as e:
         st.error(f"Failed to update time logs: {e}")
@@ -1312,48 +1293,14 @@ def render_analytics_tab():
     st.markdown("# Advanced Analytics")
     
     # Force fresh data loading to ensure we have the latest data
-    # Clear cache first to ensure fresh data
     st.session_state.tracker._data_cache = None
     logs_df = st.session_state.tracker.get_time_logs()
     tasks_df = pd.read_csv(st.session_state.tracker.tasks_file) if os.path.exists(st.session_state.tracker.tasks_file) else pd.DataFrame()
     
-    # Debug: Show what data was loaded
-    st.write(f"**Debug: Loaded {len(logs_df)} time log entries**")
+    # Optional: quick preview
     if not logs_df.empty:
-        st.write("Sample of loaded data:")
-        st.dataframe(logs_df.head(3), use_container_width=True)
-        
-        # Debug: Show the actual CSV file contents
-        st.write("**Debug: Checking CSV file directly:**")
-        try:
-            csv_df = pd.read_csv("time_logs.csv")
-            st.write(f"CSV file has {len(csv_df)} rows")
-            st.write("CSV file sample:")
-            st.dataframe(csv_df.head(3), use_container_width=True)
-            
-            # Compare loaded data with CSV data
-            if len(logs_df) == len(csv_df):
-                st.write("✅ **Data consistency check: PASSED** - Loaded data matches CSV file")
-            else:
-                st.write(f"❌ **Data consistency check: FAILED** - Loaded: {len(logs_df)}, CSV: {len(csv_df)}")
-                
-            # Check if specific rows match
-            if not logs_df.empty and not csv_df.empty:
-                # Compare first few rows
-                logs_sample = logs_df.head(3)[['task', 'start_time', 'end_time', 'duration_minutes']]
-                csv_sample = csv_df.head(3)[['task', 'start_time', 'end_time', 'duration_minutes']]
-                
-                if logs_sample.equals(csv_sample):
-                    st.write("✅ **Row content check: PASSED** - Sample rows match exactly")
-                else:
-                    st.write("❌ **Row content check: FAILED** - Sample rows differ")
-                    st.write("Loaded data sample:")
-                    st.dataframe(logs_sample, use_container_width=True)
-                    st.write("CSV file sample:")
-                    st.dataframe(csv_sample, use_container_width=True)
-                    
-        except Exception as e:
-            st.write(f"Error reading CSV file: {e}")
+        with st.expander("Preview recent data", expanded=False):
+            st.dataframe(logs_df.tail(10), use_container_width=True)
     
     if logs_df.empty:
         st.info("No data available for analytics. Start tracking time to see insights!")
@@ -1525,7 +1472,6 @@ def render_data_management_tab():
                 
                 if st.button("Import Data"):
                     if data_manager.import_data(import_data):
-                        st.success("Data imported successfully!")
                         st.success("Data imported successfully!")
                         st.rerun()
                     else:

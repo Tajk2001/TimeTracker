@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Compile Python files
+        run: |
+          python -m compileall .
+
+      - name: Lint CSV headers (basic)
+        run: |
+          python - << 'PY'
+import csv, sys, os
+ok = True
+expected = {
+  'time_logs.csv': ['task', 'start_time', 'end_time', 'duration_minutes', 'date', 'session_type'],
+  'tasks.csv': ['task_name', 'status', 'created_date', 'total_time_minutes'],
+  'schedule_blocks.csv': ['date', 'start_time', 'end_time', 'task_name', 'block_type', 'notes', 'completed'],
+}
+for fname, header in expected.items():
+    if not os.path.exists(fname):
+        continue
+    with open(fname, newline='') as f:
+        reader = csv.reader(f)
+        row = next(reader, [])
+        if row[:len(header)] != header:
+            print(f"CSV header mismatch in {fname}: {row}")
+            ok = False
+sys.exit(0 if ok else 1)
+PY
+
